@@ -8,6 +8,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 const routineSections = [
 	{
+		id: 'calentamiento',
 		title: 'Calentamiento',
 		description: 'Activa articulaciones y sube pulsaciones antes de empezar.',
 		exercises: [
@@ -40,6 +41,7 @@ const routineSections = [
 		],
 	},
 	{
+		id: 'piernas',
 		title: 'Piernas y gluteos',
 		description: 'Fuerza base y estabilidad para todo el cuerpo.',
 		exercises: [
@@ -86,6 +88,7 @@ const routineSections = [
 		],
 	},
 	{
+		id: 'empuje',
 		title: 'Empuje (pecho, hombro, triceps)',
 		description: 'Trabajo de empuje para la parte superior.',
 		exercises: [
@@ -122,6 +125,7 @@ const routineSections = [
 		],
 	},
 	{
+		id: 'tiron',
 		title: 'Tiron (espalda, biceps)',
 		description: 'Compensa el empuje y activa la espalda.',
 		exercises: [
@@ -148,6 +152,7 @@ const routineSections = [
 		],
 	},
 	{
+		id: 'core',
 		title: 'Core (abdominales)',
 		description: 'Estabilidad y control del tronco.',
 		exercises: [
@@ -184,6 +189,7 @@ const routineSections = [
 		],
 	},
 	{
+		id: 'finisher',
 		title: 'Finisher (opcional)',
 		description: 'Cierra con cardio y potencia.',
 		exercises: [
@@ -208,6 +214,12 @@ const routineSections = [
 		],
 	},
 ];
+
+const routineSummary = routineSections.map((section) => ({
+	id: section.id,
+	title: section.title,
+	count: section.exercises.length,
+}));
 ---
 
 <!doctype html>
@@ -232,11 +244,68 @@ const routineSections = [
 				</div>
 			</section>
 
+			<section class="routine-overview">
+				<div class="routine-overview__card">
+					<h2>Como usar la rutina</h2>
+					<ul>
+						<li>Haz el calentamiento completo antes de empezar.</li>
+						<li>Descansa 1-2 min entre secciones si lo necesitas.</li>
+						<li>Prioriza la tecnica sobre la velocidad.</li>
+					</ul>
+				</div>
+				<nav class="routine-overview__nav">
+					<h2>Secciones</h2>
+					<div class="routine-overview__links">
+						{routineSummary.map((item) => (
+							<a href={`#${item.id}`}>
+								<span>{item.title}</span>
+								<em>{item.count} ejercicios</em>
+							</a>
+						))}
+					</div>
+				</nav>
+			</section>
+
+			<section class="routine-info">
+				<div class="routine-info__card">
+					<h2>Equipo y espacio</h2>
+					<p>Necesitas una silla estable, una mochila con peso y una colchoneta.</p>
+					<ul>
+						<li>Mochila: libros o botellas para ajustar carga.</li>
+						<li>Espacio: 2x2 metros libres.</li>
+						<li>Suelo antideslizante para seguridad.</li>
+					</ul>
+				</div>
+				<div class="routine-info__card">
+					<h2>Frecuencia sugerida</h2>
+					<p>Haz esta rutina 2-4 veces por semana segun tu nivel.</p>
+					<ul>
+						<li>Principiante: 2 dias con 1 dia de descanso.</li>
+						<li>Intermedio: 3 dias alternos.</li>
+						<li>Avanzado: 4 dias con intensidad moderada.</li>
+					</ul>
+				</div>
+				<div class="routine-info__card">
+					<h2>Cierre y estiramiento</h2>
+					<p>Dedica 5-8 minutos a bajar pulsaciones y estirar.</p>
+					<ul>
+						<li>Respiracion profunda y lenta.</li>
+						<li>Estira piernas, pecho y espalda.</li>
+						<li>Hidrata y registra tu progreso.</li>
+					</ul>
+				</div>
+			</section>
+
 			<div class="routine-sections">
 				{routineSections.map((section) => (
-					<Section title={section.title} description={section.description}>
-						{section.exercises.map((exercise) => (
-							<ExerciseCard {...exercise} />
+					<Section
+						id={section.id}
+						title={section.title}
+						description={section.description}
+						count={section.exercises.length}
+					>
+						{section.exercises.map((exercise, index) => (
+							<ExerciseCard {...exercise} order={index + 1} />
 						))}
 					</Section>
 				))}
@@ -270,6 +339,18 @@ const routineSections = [
 		padding: 2.5rem;
 		border: 1px solid rgba(148, 163, 184, 0.2);
 		box-shadow: 0 30px 70px rgba(5, 8, 15, 0.55);
+		position: relative;
+		overflow: hidden;
+	}
+
+	.routine-hero::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background:
+			radial-gradient(circle at top right, rgba(250, 204, 21, 0.08), transparent 55%),
+			radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 60%);
+		pointer-events: none;
 	}
 
 	.routine-hero__badge {
@@ -313,6 +394,103 @@ const routineSections = [
 		font-size: 0.9rem;
 	}
 
+	.routine-overview {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.routine-overview__card,
+	.routine-overview__nav {
+		background: rgba(12, 16, 24, 0.8);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 20px;
+		padding: 1.75rem;
+		display: grid;
+		gap: 1rem;
+	}
+
+	.routine-overview h2 {
+		margin: 0;
+		font-size: 1.4rem;
+		color: #f8fafc;
+	}
+
+	.routine-overview ul {
+		margin: 0;
+		padding-left: 1.2rem;
+		color: rgba(226, 232, 240, 0.8);
+		display: grid;
+		gap: 0.5rem;
+	}
+
+	.routine-overview__links {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.routine-overview__links a {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 1rem;
+		border-radius: 14px;
+		background: rgba(15, 23, 42, 0.6);
+		border: 1px solid rgba(148, 163, 184, 0.15);
+		text-decoration: none;
+		color: #e2e8f0;
+		transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+	}
+
+	.routine-overview__links a:hover {
+		transform: translateY(-2px);
+		border-color: rgba(250, 204, 21, 0.5);
+		background: rgba(15, 23, 42, 0.85);
+	}
+
+	.routine-overview__links em {
+		font-style: normal;
+		color: rgba(226, 232, 240, 0.6);
+		font-size: 0.9rem;
+	}
+
+	.routine-info {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.routine-info__card {
+		background: rgba(12, 16, 24, 0.8);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 20px;
+		padding: 1.6rem;
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.routine-info__card h2 {
+		margin: 0;
+		font-size: 1.2rem;
+		color: #f8fafc;
+	}
+
+	.routine-info__card p {
+		margin: 0;
+		color: rgba(226, 232, 240, 0.7);
+		font-size: 0.95rem;
+	}
+
+	.routine-info__card ul {
+		margin: 0;
+		padding-left: 1.1rem;
+		color: rgba(226, 232, 240, 0.78);
+		display: grid;
+		gap: 0.35rem;
+		font-size: 0.95rem;
+	}
+
 	.routine-sections {
 		display: grid;
 		gap: 3rem;
@@ -322,9 +500,38 @@ const routineSections = [
 		color: #facc15;
 	}
 
+	:global(body.routine-body .exercise-card) {
+		animation: rise 0.6s ease both;
+	}
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(body.routine-body .exercise-card) {
+			animation: none;
+		}
+	}
+
 	@media (max-width: 720px) {
 		.routine-hero {
 			padding: 1.75rem;
+		}
+
+		.routine-overview {
+			grid-template-columns: 1fr;
+		}
+
+		.routine-info {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
