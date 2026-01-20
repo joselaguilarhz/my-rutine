@@ -1,0 +1,290 @@
+---
+---
+
+<script>
+	const dateKey = new Date().toISOString().slice(0, 10);
+	const storageKey = `routine-progress-${dateKey}`;
+	const cards = Array.from(document.querySelectorAll('[data-exercise-id]'));
+	const sections = Array.from(document.querySelectorAll('[data-section-id]'));
+	const totalCount = cards.length;
+
+	const stateByCard = new Map();
+
+	const progressCount = document.querySelector('[data-progress-count]');
+	const progressTotal = document.querySelector('[data-progress-total]');
+	const progressFill = document.querySelector('[data-progress-fill]');
+
+	const sectionPanel = document.querySelector('[data-sections-panel]');
+	const sectionOverlay = document.querySelector('[data-sections-overlay]');
+	const sectionToggle = document.querySelector('[data-sections-toggle]');
+	const backToTop = document.querySelector('[data-back-to-top]');
+
+	const loadProgress = () => {
+		try {
+			return JSON.parse(localStorage.getItem(storageKey) || '{}');
+		} catch {
+			return {};
+		}
+	};
+
+	const saveProgress = (data) => {
+		localStorage.setItem(storageKey, JSON.stringify(data));
+	};
+
+	const progress = loadProgress();
+	const doneMap = progress.done || {};
+
+	const formatTime = (value) => {
+		const minutes = Math.floor(value / 60);
+		const seconds = value % 60;
+		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	};
+
+	const getDefaultRest = (card) => {
+		const raw = Number(card.dataset.rest || '0');
+		return Number.isFinite(raw) && raw > 0 ? raw : 30;
+	};
+
+	const setDoneState = (card, done) => {
+		const id = card.dataset.exerciseId;
+		const checkbox = card.querySelector('[data-done-checkbox]');
+		card.classList.toggle('is-done', done);
+		if (checkbox) {
+			checkbox.checked = done;
+		}
+		if (done) {
+			doneMap[id] = true;
+		} else {
+			delete doneMap[id];
+		}
+		saveProgress({ done: doneMap });
+		updateProgress();
+	};
+
+	const updateProgress = () => {
+		const doneCount = Object.keys(doneMap).length;
+		if (progressCount) progressCount.textContent = `${doneCount}`;
+		if (progressTotal) progressTotal.textContent = `${totalCount}`;
+		if (progressFill) {
+			const ratio = totalCount ? (doneCount / totalCount) * 100 : 0;
+			progressFill.style.width = `${ratio}%`;
+		}
+
+		sections.forEach((section) => {
+			const sectionId = section.dataset.sectionId;
+			const sectionCards = cards.filter((card) => card.dataset.sectionId === sectionId);
+			const total = sectionCards.length;
+			const done = sectionCards.filter((card) => doneMap[card.dataset.exerciseId]).length;
+			const target = section.querySelector('[data-section-progress]');
+			if (target) {
+				target.textContent = `${done}/${total} hechos`;
+			}
+		});
+	};
+
+	const ensureTimerState = (card) => {
+		if (!stateByCard.has(card)) {
+			stateByCard.set(card, {
+				remaining: 0,
+				running: false,
+				intervalId: null,
+				selected: getDefaultRest(card),
+			});
+		}
+		return stateByCard.get(card);
+	};
+
+	const updateTimerUI = (card) => {
+		const timer = card.querySelector('[data-timer]');
+		const display = card.querySelector('[data-timer-display]');
+		const status = card.querySelector('[data-timer-status]');
+		const startBtn = card.querySelector('[data-action="start"]');
+		const toggleBtn = card.querySelector('[data-action="toggle"]');
+		const resetBtn = card.querySelector('[data-action="reset"]');
+		const doneCta = card.querySelector('[data-action="mark-done"]');
+		const state = ensureTimerState(card);
+
+		if (display) display.textContent = formatTime(state.remaining);
+		if (toggleBtn) {
+			toggleBtn.textContent = state.running ? 'Pausar' : 'Reanudar';
+			toggleBtn.disabled = state.remaining === 0;
+		}
+		if (resetBtn) resetBtn.disabled = state.remaining === 0 && !state.running;
+		if (startBtn) startBtn.disabled = state.running;
+		if (timer) timer.classList.toggle('is-complete', state.remaining === 0 && !state.running && state.wasComplete);
+
+		if (status) {
+			status.textContent = state.remaining === 0 && state.wasComplete ? 'Descanso completo' : '';
+		}
+		if (doneCta) {
+			doneCta.hidden = !(state.remaining === 0 && state.wasComplete);
+		}
+	};
+
+	const startTimer = (card) => {
+		const state = ensureTimerState(card);
+		if (state.running) return;
+		if (state.remaining === 0) {
+			state.remaining = state.selected || getDefaultRest(card);
+		}
+		state.running = true;
+		state.wasComplete = false;
+		updateTimerUI(card);
+		state.intervalId = window.setInterval(() => {
+			state.remaining -= 1;
+			if (state.remaining <= 0) {
+				state.remaining = 0;
+				state.running = false;
+				state.wasComplete = true;
+				window.clearInterval(state.intervalId);
+				state.intervalId = null;
+			}
+			updateTimerUI(card);
+		}, 1000);
+	};
+
+	const toggleTimer = (card) => {
+		const state = ensureTimerState(card);
+		if (state.running) {
+			state.running = false;
+			window.clearInterval(state.intervalId);
+			state.intervalId = null;
+		} else if (state.remaining > 0) {
+			state.running = true;
+			state.intervalId = window.setInterval(() => {
+				state.remaining -= 1;
+				if (state.remaining <= 0) {
+					state.remaining = 0;
+					state.running = false;
+					state.wasComplete = true;
+					window.clearInterval(state.intervalId);
+					state.intervalId = null;
+				}
+				updateTimerUI(card);
+			}, 1000);
+		}
+		updateTimerUI(card);
+	};
+
+	const resetTimer = (card) => {
+		const state = ensureTimerState(card);
+		state.running = false;
+		state.remaining = 0;
+		state.wasComplete = false;
+		window.clearInterval(state.intervalId);
+		state.intervalId = null;
+		updateTimerUI(card);
+	};
+
+	const selectRest = (card, value) => {
+		const state = ensureTimerState(card);
+		state.selected = value;
+		state.remaining = 0;
+		state.wasComplete = false;
+		const options = card.querySelectorAll('[data-rest-option]');
+		options.forEach((btn) => {
+			btn.classList.toggle('is-active', Number(btn.dataset.restOption) === value);
+		});
+		updateTimerUI(card);
+	};
+
+	const scrollToNext = (card) => {
+		const index = cards.indexOf(card);
+		if (index === -1) return;
+		const next = cards[index + 1] || cards[0];
+		next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	};
+
+	cards.forEach((card) => {
+		const id = card.dataset.exerciseId;
+		const checkbox = card.querySelector('[data-done-checkbox]');
+		selectRest(card, getDefaultRest(card));
+		if (checkbox) {
+			checkbox.checked = Boolean(doneMap[id]);
+		}
+		card.classList.toggle('is-done', Boolean(doneMap[id]));
+		updateTimerUI(card);
+	});
+
+	updateProgress();
+
+	document.addEventListener('change', (event) => {
+		const checkbox = event.target.closest('[data-done-checkbox]');
+		if (!checkbox) return;
+		const card = checkbox.closest('[data-exercise-id]');
+		if (!card) return;
+		setDoneState(card, checkbox.checked);
+	});
+
+	document.addEventListener('click', (event) => {
+		const restOption = event.target.closest('[data-rest-option]');
+		if (restOption) {
+			const card = restOption.closest('[data-exercise-id]');
+			if (card) {
+				selectRest(card, Number(restOption.dataset.restOption));
+			}
+			return;
+		}
+
+		const action = event.target.closest('[data-action]');
+		if (action) {
+			const card = action.closest('[data-exercise-id]');
+			const type = action.dataset.action;
+			if (!card) return;
+			if (type === 'start') startTimer(card);
+			if (type === 'toggle') toggleTimer(card);
+			if (type === 'reset') resetTimer(card);
+			if (type === 'next') scrollToNext(card);
+			if (type === 'mark-done') setDoneState(card, true);
+			return;
+		}
+
+		if (event.target.closest('[data-reset-today]')) {
+			Object.keys(doneMap).forEach((key) => delete doneMap[key]);
+			saveProgress({ done: doneMap });
+			cards.forEach((card) => setDoneState(card, false));
+			return;
+		}
+
+		if (event.target.closest('[data-sections-toggle]')) {
+			sectionPanel?.classList.toggle('is-open');
+			sectionOverlay?.classList.toggle('is-open');
+			if (sectionPanel) {
+				sectionPanel.hidden = !sectionPanel.classList.contains('is-open');
+			}
+			if (sectionToggle) {
+				const expanded = sectionPanel?.classList.contains('is-open');
+				sectionToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			}
+			return;
+		}
+
+		if (event.target.closest('[data-sections-overlay]')) {
+			sectionPanel?.classList.remove('is-open');
+			sectionOverlay?.classList.remove('is-open');
+			if (sectionPanel) sectionPanel.hidden = true;
+			if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
+			return;
+		}
+
+		if (event.target.closest('[data-sections-panel] a')) {
+			sectionPanel?.classList.remove('is-open');
+			sectionOverlay?.classList.remove('is-open');
+			if (sectionPanel) sectionPanel.hidden = true;
+			if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
+			return;
+		}
+
+		if (event.target.closest('[data-back-to-top]')) {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	});
+
+	const handleScroll = () => {
+		if (!backToTop) return;
+		backToTop.classList.toggle('is-visible', window.scrollY > 400);
+	};
+
+	handleScroll();
+	window.addEventListener('scroll', handleScroll, { passive: true });
+</script>

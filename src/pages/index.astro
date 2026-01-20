@@ -3,8 +3,14 @@ import BaseHead from '../components/BaseHead.astro';
 import ExerciseCard from '../components/ExerciseCard.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import RoutineClient from '../components/RoutineClient.astro';
 import Section from '../components/Section.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const getDefaultRest = (rest) => {
+	const match = rest.match(/\d+/);
+	return match ? Number(match[0]) : 30;
+};
 
 const routineSections = [
 	{
@@ -13,6 +19,7 @@ const routineSections = [
 		description: 'Activa articulaciones y sube pulsaciones antes de empezar.',
 		exercises: [
 			{
+				id: 'calentamiento-jumping-jacks',
 				name: 'Jumping Jacks',
 				image: '/exercises/jumping-jack.jpg',
 				sets: '2',
@@ -23,6 +30,7 @@ const routineSections = [
 				hardVariant: 'Aumenta la velocidad durante los ultimos 10 s',
 			},
 			{
+				id: 'calentamiento-movilidad-hombros',
 				name: 'Movilidad hombros',
 				image: '/exercises/pike-push-up.jpg',
 				sets: '2',
@@ -31,6 +39,7 @@ const routineSections = [
 				cues: ['Movimiento amplio y controlado', 'Sin dolor ni compensaciones'],
 			},
 			{
+				id: 'calentamiento-sentadilla-suave',
 				name: 'Sentadillas suaves',
 				image: '/exercises/squat.jpg',
 				sets: '2',
@@ -46,6 +55,7 @@ const routineSections = [
 		description: 'Fuerza base y estabilidad para todo el cuerpo.',
 		exercises: [
 			{
+				id: 'piernas-sentadillas',
 				name: 'Sentadillas',
 				image: '/exercises/squat.jpg',
 				sets: '3',
@@ -56,6 +66,7 @@ const routineSections = [
 				hardVariant: 'Pausa de 2 s abajo',
 			},
 			{
+				id: 'piernas-zancadas-alternas',
 				name: 'Zancadas alternas',
 				image: '/exercises/lunge.jpg',
 				sets: '3',
@@ -66,6 +77,7 @@ const routineSections = [
 				hardVariant: 'Anade un salto al cambio',
 			},
 			{
+				id: 'piernas-puente-gluteo',
 				name: 'Puente de gluteo',
 				image: '/exercises/glute-bridge.jpg',
 				sets: '3',
@@ -76,6 +88,7 @@ const routineSections = [
 				hardVariant: 'Una pierna alternando',
 			},
 			{
+				id: 'piernas-wall-sit',
 				name: 'Wall sit',
 				image: '/exercises/wall-sit.jpg',
 				sets: '3',
@@ -93,6 +106,7 @@ const routineSections = [
 		description: 'Trabajo de empuje para la parte superior.',
 		exercises: [
 			{
+				id: 'empuje-flexiones',
 				name: 'Flexiones',
 				image: '/exercises/push-up.jpg',
 				sets: '3',
@@ -103,6 +117,7 @@ const routineSections = [
 				hardVariant: 'Pies elevados',
 			},
 			{
+				id: 'empuje-flexiones-pica',
 				name: 'Flexiones pica (hombros)',
 				image: '/exercises/pike-push-up.jpg',
 				sets: '3',
@@ -113,6 +128,7 @@ const routineSections = [
 				hardVariant: 'Pies sobre una silla',
 			},
 			{
+				id: 'empuje-fondos-silla',
 				name: 'Fondos en silla',
 				image: '/exercises/chair-dip.jpg',
 				sets: '3',
@@ -130,6 +146,7 @@ const routineSections = [
 		description: 'Compensa el empuje y activa la espalda.',
 		exercises: [
 			{
+				id: 'tiron-remo-mochila',
 				name: 'Remo con mochila',
 				image: '/exercises/backpack-row.jpg',
 				sets: '3',
@@ -140,6 +157,7 @@ const routineSections = [
 				hardVariant: 'Pausa 1 s arriba',
 			},
 			{
+				id: 'tiron-curl-biceps',
 				name: 'Curl biceps con mochila/garrafas',
 				image: '/exercises/backpack-curl.jpg',
 				sets: '3',
@@ -157,6 +175,7 @@ const routineSections = [
 		description: 'Estabilidad y control del tronco.',
 		exercises: [
 			{
+				id: 'core-plancha',
 				name: 'Plancha',
 				image: '/exercises/plank.jpg',
 				sets: '3',
@@ -167,6 +186,7 @@ const routineSections = [
 				hardVariant: 'Eleva una pierna',
 			},
 			{
+				id: 'core-crunch',
 				name: 'Crunch',
 				image: '/exercises/crunch.jpg',
 				sets: '3',
@@ -177,6 +197,7 @@ const routineSections = [
 				hardVariant: 'Pausa 1 s arriba',
 			},
 			{
+				id: 'core-elevaciones-piernas',
 				name: 'Elevaciones de piernas',
 				image: '/exercises/leg-raise.jpg',
 				sets: '3',
@@ -194,6 +215,7 @@ const routineSections = [
 		description: 'Cierra con cardio y potencia.',
 		exercises: [
 			{
+				id: 'finisher-mountain-climbers',
 				name: 'Mountain climbers',
 				image: '/exercises/mountain-climber.jpg',
 				sets: '3',
@@ -204,6 +226,7 @@ const routineSections = [
 				hardVariant: 'Sprint final de 10 s',
 			},
 			{
+				id: 'finisher-jumping-jacks',
 				name: 'Jumping Jacks',
 				image: '/exercises/jumping-jack.jpg',
 				sets: '3',
@@ -220,6 +243,8 @@ const routineSummary = routineSections.map((section) => ({
 	title: section.title,
 	count: section.exercises.length,
 }));
+
+const totalExercises = routineSections.reduce((sum, section) => sum + section.exercises.length, 0);
 ---
 
 <!doctype html>
@@ -253,7 +278,7 @@ const routineSummary = routineSections.map((section) => ({
 						<li>Prioriza la tecnica sobre la velocidad.</li>
 					</ul>
 				</div>
-				<nav class="routine-overview__nav">
+				<nav class="routine-overview__nav" aria-label="Indice de secciones">
 					<h2>Secciones</h2>
 					<div class="routine-overview__links">
 						{routineSummary.map((item) => (
@@ -264,6 +289,20 @@ const routineSummary = routineSections.map((section) => ({
 						))}
 					</div>
 				</nav>
+			</section>
+
+			<section class="routine-progress" aria-live="polite">
+				<div>
+					<h2>Progreso de hoy</h2>
+					<p>
+						<span data-progress-count>0</span> / <span data-progress-total>{totalExercises}</span> ejercicios
+						completados
+					</p>
+				</div>
+				<div class="routine-progress__bar">
+					<div class="routine-progress__fill" data-progress-fill></div>
+				</div>
+				<button class="routine-progress__reset" type="button" data-reset-today>Reset de hoy</button>
 			</section>
 
 			<section class="routine-info">
@@ -305,13 +344,34 @@ const routineSummary = routineSections.map((section) => ({
 						count={section.exercises.length}
 					>
 						{section.exercises.map((exercise, index) => (
-							<ExerciseCard {...exercise} order={index + 1} />
+							<ExerciseCard
+								{...exercise}
+								order={index + 1}
+								sectionId={section.id}
+								restSeconds={getDefaultRest(exercise.rest)}
+							/>
 						))}
 					</Section>
 				))}
 			</div>
 		</main>
+		<button class="floating-button" type="button" data-sections-toggle aria-expanded="false">
+			Secciones
+		</button>
+		<div class="floating-panel" data-sections-panel hidden>
+			<h3>Ir a seccion</h3>
+			<nav>
+				{routineSummary.map((item) => (
+					<a href={`#${item.id}`}>{item.title}</a>
+				))}
+			</nav>
+		</div>
+		<div class="floating-overlay" data-sections-overlay></div>
+		<button class="back-to-top" type="button" data-back-to-top aria-label="Volver arriba">
+			Arriba
+		</button>
 		<Footer />
+		<RoutineClient />
 	</body>
 </html>
 
@@ -455,6 +515,59 @@ const routineSummary = routineSections.map((section) => ({
 		font-size: 0.9rem;
 	}
 
+	.routine-progress {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+		align-items: center;
+		gap: 1.5rem;
+		background: rgba(12, 16, 24, 0.8);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 20px;
+		padding: 1.5rem 1.75rem;
+	}
+
+	.routine-progress h2 {
+		margin: 0 0 0.35rem;
+		font-size: 1.4rem;
+		color: #f8fafc;
+	}
+
+	.routine-progress p {
+		margin: 0;
+		color: rgba(226, 232, 240, 0.7);
+		font-size: 0.95rem;
+	}
+
+	.routine-progress__bar {
+		position: relative;
+		height: 10px;
+		background: rgba(15, 23, 42, 0.6);
+		border-radius: 999px;
+		overflow: hidden;
+	}
+
+	.routine-progress__fill {
+		position: absolute;
+		inset: 0;
+		width: 0%;
+		background: linear-gradient(90deg, rgba(250, 204, 21, 0.9), rgba(34, 197, 94, 0.9));
+		transition: width 0.3s ease;
+	}
+
+	.routine-progress__reset {
+		background: transparent;
+		border: 1px solid rgba(148, 163, 184, 0.35);
+		color: rgba(226, 232, 240, 0.8);
+		padding: 0.55rem 1rem;
+		border-radius: 999px;
+		cursor: pointer;
+	}
+
+	.routine-progress__reset:focus-visible {
+		outline: 2px solid #facc15;
+		outline-offset: 2px;
+	}
+
 	.routine-info {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -500,6 +613,17 @@ const routineSummary = routineSections.map((section) => ({
 		color: #facc15;
 	}
 
+	:global(body.routine-body button) {
+		font-family: inherit;
+	}
+
+	:global(body.routine-body a:focus-visible),
+	:global(body.routine-body button:focus-visible),
+	:global(body.routine-body input:focus-visible) {
+		outline: 2px solid #facc15;
+		outline-offset: 2px;
+	}
+
 	:global(body.routine-body .exercise-card) {
 		animation: rise 0.6s ease both;
 	}
@@ -530,8 +654,111 @@ const routineSummary = routineSections.map((section) => ({
 			grid-template-columns: 1fr;
 		}
 
+		.routine-progress {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+
 		.routine-info {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	.floating-button {
+		position: fixed;
+		bottom: 1.5rem;
+		left: 1.5rem;
+		background: rgba(15, 23, 42, 0.9);
+		color: #f8fafc;
+		border: 1px solid rgba(148, 163, 184, 0.3);
+		padding: 0.65rem 1rem;
+		border-radius: 999px;
+		display: none;
+		z-index: 20;
+	}
+
+	.floating-panel {
+		position: fixed;
+		bottom: 4.5rem;
+		left: 1.5rem;
+		background: rgba(8, 12, 20, 0.98);
+		border: 1px solid rgba(148, 163, 184, 0.3);
+		border-radius: 16px;
+		padding: 1rem;
+		width: min(260px, calc(100vw - 3rem));
+		display: grid;
+		gap: 0.75rem;
+		z-index: 20;
+	}
+
+	.floating-panel h3 {
+		margin: 0;
+		font-size: 1rem;
+		color: #f8fafc;
+	}
+
+	.floating-panel nav {
+		display: grid;
+		gap: 0.5rem;
+	}
+
+	.floating-panel a {
+		text-decoration: none;
+		color: rgba(226, 232, 240, 0.8);
+		padding: 0.4rem 0.5rem;
+		border-radius: 10px;
+		background: rgba(15, 23, 42, 0.6);
+	}
+
+	.floating-panel a:hover {
+		color: #facc15;
+	}
+
+	.floating-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.5);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.2s ease;
+		z-index: 15;
+	}
+
+	.floating-overlay.is-open {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.floating-panel.is-open {
+		display: grid;
+	}
+
+	.back-to-top {
+		position: fixed;
+		right: 1.5rem;
+		bottom: 1.5rem;
+		background: #facc15;
+		color: #0b0e14;
+		border: none;
+		padding: 0.6rem 0.9rem;
+		border-radius: 999px;
+		font-weight: 600;
+		cursor: pointer;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.2s ease, transform 0.2s ease;
+		z-index: 20;
+	}
+
+	.back-to-top.is-visible {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translateY(-4px);
+	}
+
+	@media (max-width: 960px) {
+		.floating-button {
+			display: inline-flex;
 		}
 	}
 </style>

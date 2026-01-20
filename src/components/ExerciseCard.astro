@@ -1,10 +1,13 @@
 ---
 const {
+	id,
+	sectionId,
 	name,
 	image,
 	sets,
 	reps,
 	rest,
+	restSeconds,
 	cues = [],
 	easyVariant,
 	hardVariant,
@@ -12,13 +15,24 @@ const {
 } = Astro.props;
 ---
 
-<article class="exercise-card">
+<article
+	class="exercise-card"
+	data-exercise-id={id}
+	data-section-id={sectionId}
+	data-rest={restSeconds}
+>
 	<div class="exercise-card__image">
 		<img src={image} alt={`Ejercicio: ${name}`} loading="lazy" />
 		{order && <span class="exercise-card__order">#{order}</span>}
 	</div>
 	<div class="exercise-card__content">
-		<h3>{name}</h3>
+		<div class="exercise-card__title">
+			<h3>{name}</h3>
+			<label class="exercise-card__check">
+				<input type="checkbox" data-done-checkbox />
+				<span>Hecho</span>
+			</label>
+		</div>
 		<dl class="exercise-card__meta">
 			<div>
 				<dt>Series</dt>
@@ -33,6 +47,28 @@ const {
 				<dd>{rest}</dd>
 			</div>
 		</dl>
+		<div class="exercise-card__timer" data-timer>
+			<div class="exercise-card__timer-row">
+				<p class="exercise-card__timer-label">Descanso</p>
+				<div class="exercise-card__timer-display" data-timer-display>00:00</div>
+			</div>
+			<div class="exercise-card__timer-options">
+				<button type="button" data-rest-option="20">20s</button>
+				<button type="button" data-rest-option="45">45s</button>
+				<button type="button" data-rest-option="60">60s</button>
+				<button type="button" data-rest-option="90">90s</button>
+			</div>
+			<div class="exercise-card__timer-actions">
+				<button type="button" data-action="start">Iniciar descanso</button>
+				<button type="button" data-action="toggle" disabled>Pausar</button>
+				<button type="button" data-action="reset" disabled>Reset</button>
+				<button type="button" data-action="next">Siguiente</button>
+			</div>
+			<div class="exercise-card__timer-status" data-timer-status aria-live="polite"></div>
+			<button class="exercise-card__done-cta" type="button" data-action="mark-done" hidden>
+				Marcar como hecho
+			</button>
+		</div>
 		{cues?.length > 0 && (
 			<div class="exercise-card__cues">
 				<h4>Pistas tecnicas</h4>
@@ -106,10 +142,44 @@ const {
 		gap: 1rem;
 	}
 
+	.exercise-card__title {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
 	.exercise-card h3 {
 		font-size: 1.25rem;
 		margin: 0;
 		color: #f8fafc;
+	}
+
+	.exercise-card__check {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.9rem;
+		color: rgba(226, 232, 240, 0.8);
+	}
+
+	.exercise-card__check input {
+		width: 1.1rem;
+		height: 1.1rem;
+		accent-color: #facc15;
+	}
+
+	.exercise-card.is-done {
+		border-color: rgba(34, 197, 94, 0.5);
+		box-shadow: 0 16px 36px rgba(15, 23, 42, 0.65);
+		opacity: 0.82;
+	}
+
+	.exercise-card.is-done h3 {
+		text-decoration: line-through;
+		text-decoration-thickness: 2px;
+		color: rgba(226, 232, 240, 0.6);
 	}
 
 	.exercise-card__meta {
@@ -138,6 +208,99 @@ const {
 		font-weight: 600;
 		font-size: 0.95rem;
 		color: #e2e8f0;
+	}
+
+	.exercise-card__timer {
+		background: rgba(8, 12, 20, 0.75);
+		border: 1px solid rgba(148, 163, 184, 0.2);
+		border-radius: 14px;
+		padding: 0.9rem;
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.exercise-card__timer-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.exercise-card__timer-label {
+		margin: 0;
+		font-size: 0.9rem;
+		color: rgba(226, 232, 240, 0.7);
+	}
+
+	.exercise-card__timer-display {
+		font-weight: 700;
+		font-size: 1.1rem;
+		color: #f8fafc;
+		letter-spacing: 0.08em;
+	}
+
+	.exercise-card__timer-options {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.5rem;
+	}
+
+	.exercise-card__timer-options button,
+	.exercise-card__timer-actions button,
+	.exercise-card__done-cta {
+		background: rgba(15, 23, 42, 0.7);
+		border: 1px solid rgba(148, 163, 184, 0.2);
+		color: rgba(226, 232, 240, 0.9);
+		border-radius: 10px;
+		padding: 0.45rem 0.6rem;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: border-color 0.2s ease, transform 0.2s ease;
+	}
+
+	.exercise-card__timer-options button.is-active {
+		border-color: rgba(250, 204, 21, 0.7);
+		color: #facc15;
+	}
+
+	.exercise-card__timer-actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.5rem;
+	}
+
+	.exercise-card__timer-actions button[data-action='start'] {
+		background: rgba(250, 204, 21, 0.15);
+		border-color: rgba(250, 204, 21, 0.5);
+		color: #facc15;
+	}
+
+	.exercise-card__timer-actions button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.exercise-card__timer-status {
+		min-height: 1.1rem;
+		font-size: 0.85rem;
+		color: rgba(226, 232, 240, 0.7);
+	}
+
+	.exercise-card__timer.is-complete .exercise-card__timer-display {
+		color: #22c55e;
+	}
+
+	.exercise-card__done-cta {
+		background: rgba(34, 197, 94, 0.2);
+		border-color: rgba(34, 197, 94, 0.5);
+		color: #bbf7d0;
+	}
+
+	.exercise-card__timer-options button:focus-visible,
+	.exercise-card__timer-actions button:focus-visible,
+	.exercise-card__done-cta:focus-visible {
+		outline: 2px solid #facc15;
+		outline-offset: 2px;
 	}
 
 	.exercise-card__cues,
@@ -172,6 +335,10 @@ const {
 	@media (max-width: 640px) {
 		.exercise-card__meta {
 			grid-template-columns: 1fr;
+		}
+
+		.exercise-card__timer-options {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 	}
 </style>

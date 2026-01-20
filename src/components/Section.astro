@@ -2,12 +2,13 @@
 const { id, title, description, count } = Astro.props;
 ---
 
-<section class="routine-section" id={id}>
+<section class="routine-section" id={id} data-section-id={id} data-section-total={count}>
 	<header class="routine-section__header">
 		<div class="routine-section__title">
 			<h2>{title}</h2>
 			{count && <span class="routine-section__count">{count} ejercicios</span>}
 		</div>
+		<span class="routine-section__progress" data-section-progress></span>
 		{description && <p>{description}</p>}
 	</header>
 	<div class="routine-section__grid">
@@ -40,6 +41,11 @@ const { id, title, description, count } = Astro.props;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		color: rgba(226, 232, 240, 0.6);
+	}
+
+	.routine-section__progress {
+		color: rgba(226, 232, 240, 0.7);
+		font-size: 0.95rem;
 	}
 
 	.routine-section__header p {
