@@ -1,0 +1,63 @@
+---
+const { id, title, description, count } = Astro.props;
+---
+
+<section class="routine-section" id={id}>
+	<header class="routine-section__header">
+		<div class="routine-section__title">
+			<h2>{title}</h2>
+			{count && <span class="routine-section__count">{count} ejercicios</span>}
+		</div>
+		{description && <p>{description}</p>}
+	</header>
+	<div class="routine-section__grid">
+		<slot />
+	</div>
+</section>
+
+<style>
+	.routine-section {
+		display: grid;
+		gap: 1.5rem;
+		scroll-margin-top: 120px;
+	}
+
+	.routine-section__title {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.routine-section__header h2 {
+		margin: 0;
+		font-size: 2rem;
+		color: #f8fafc;
+	}
+
+	.routine-section__count {
+		font-size: 0.85rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: rgba(226, 232, 240, 0.6);
+	}
+
+	.routine-section__header p {
+		margin: 0.35rem 0 0;
+		color: rgba(226, 232, 240, 0.7);
+		font-size: 1.05rem;
+		max-width: 55ch;
+	}
+
+	.routine-section__grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	@media (max-width: 900px) {
+		.routine-section__grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
