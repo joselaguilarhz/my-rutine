@@ -4,11 +4,14 @@
 <script>
 	const dateKey = new Date().toISOString().slice(0, 10);
 	const storageKey = `routine-progress-${dateKey}`;
+	const prefsKey = 'routine-preferences';
 	const cards = Array.from(document.querySelectorAll('[data-exercise-id]'));
 	const sections = Array.from(document.querySelectorAll('[data-section-id]'));
 	const totalCount = cards.length;
 
 	const stateByCard = new Map();
+	let currentCard = null;
+	let guidedMode = false;
 
 	const progressCount = document.querySelector('[data-progress-count]');
 	const progressTotal = document.querySelector('[data-progress-total]');
@@ -18,6 +21,33 @@
 	const sectionOverlay = document.querySelector('[data-sections-overlay]');
 	const sectionToggle = document.querySelector('[data-sections-toggle]');
 	const backToTop = document.querySelector('[data-back-to-top]');
+
+	const guidedToggle = document.querySelector('[data-guided-toggle]');
+	const filterPending = document.querySelector('[data-filter-pending]');
+	const soundToggle = document.querySelector('[data-sound-toggle]');
+	const vibrationToggle = document.querySelector('[data-vibration-toggle]');
+
+	const nowPlaying = document.querySelector('[data-now-playing]');
+	const nowTitle = document.querySelector('[data-now-title]');
+	const nowTimer = document.querySelector('[data-now-timer]');
+	const nowStart = document.querySelector('[data-now-start]');
+	const nowToggle = document.querySelector('[data-now-toggle]');
+	const nowDone = document.querySelector('[data-now-done]');
+	const nowNext = document.querySelector('[data-now-next]');
+	const toastContainer = document.querySelector('[data-toast-container]');
+
+	const guidedOverlay = document.querySelector('[data-guided-overlay]');
+	const guidedImage = document.querySelector('[data-guided-image]');
+	const guidedTitle = document.querySelector('[data-guided-title]');
+	const guidedMeta = document.querySelector('[data-guided-meta]');
+	const guidedTimer = document.querySelector('[data-guided-timer]');
+	const guidedProgress = document.querySelector('[data-guided-progress]');
+	const guidedIndex = document.querySelector('[data-guided-index]');
+	const guidedClose = document.querySelector('[data-guided-close]');
+	const guidedStart = document.querySelector('[data-guided-start]');
+	const guidedNext = document.querySelector('[data-guided-next]');
+	const guidedDone = document.querySelector('[data-guided-done]');
+	const guidedPause = document.querySelector('[data-guided-pause]');
 
 	const loadProgress = () => {
 		try {
@@ -31,8 +61,21 @@
 		localStorage.setItem(storageKey, JSON.stringify(data));
 	};
 
-	const progress = loadProgress();
-	const doneMap = progress.done || {};
+	const loadPrefs = () => {
+		try {
+			return JSON.parse(localStorage.getItem(prefsKey) || '{}');
+		} catch {
+			return {};
+		}
+	};
+
+	const savePrefs = (prefs) => {
+		localStorage.setItem(prefsKey, JSON.stringify(prefs));
+	};
+
+	const prefs = loadPrefs();
+	const doneMap = loadProgress().done || {};
+	guidedMode = Boolean(prefs.guidedMode);
 
 	const formatTime = (value) => {
 		const minutes = Math.floor(value / 60);
@@ -40,25 +83,95 @@
 		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 	};
 
+	const showToast = (message, tone = 'info') => {
+		if (!toastContainer) return;
+		const toast = document.createElement('div');
+		const color =
+			tone === 'success'
+				? 'border-emerald-400/50 text-emerald-200'
+				: tone === 'warn'
+					? 'border-amber-300/50 text-amber-200'
+					: 'border-slate-700/50 text-slate-200';
+		toast.className = `rounded-xl border bg-slate-950/90 px-4 py-3 text-xs uppercase tracking-[0.2em] ${color}`;
+		toast.textContent = message;
+		toastContainer.appendChild(toast);
+		setTimeout(() => toast.remove(), 2500);
+	};
+
 	const getDefaultRest = (card) => {
 		const raw = Number(card.dataset.rest || '0');
 		return Number.isFinite(raw) && raw > 0 ? raw : 30;
 	};
 
-	const setDoneState = (card, done) => {
-		const id = card.dataset.exerciseId;
-		const checkbox = card.querySelector('[data-done-checkbox]');
-		card.classList.toggle('is-done', done);
-		if (checkbox) {
-			checkbox.checked = done;
+	const getState = (card) => {
+		if (!stateByCard.has(card)) {
+			stateByCard.set(card, {
+				remaining: 0,
+				running: false,
+				intervalId: null,
+				selected: getDefaultRest(card),
+				wasComplete: false,
+				notified: false,
+			});
 		}
-		if (done) {
-			doneMap[id] = true;
-		} else {
-			delete doneMap[id];
+		return stateByCard.get(card);
+	};
+
+	const setFormVisibility = () => {
+		if (!filterPending || !filterPending.checked) {
+			cards.forEach((card) => card.classList.remove('is-hidden'));
+			return;
 		}
-		saveProgress({ done: doneMap });
-		updateProgress();
+		cards.forEach((card) => {
+			const done = Boolean(doneMap[card.dataset.exerciseId]);
+			card.classList.toggle('is-hidden', done);
+		});
+	};
+
+	const updateGuidedOverlay = () => {
+		if (!guidedOverlay || !currentCard) return;
+		const img = currentCard.querySelector('img');
+		if (guidedImage && img) {
+			guidedImage.src = img.src;
+			guidedImage.alt = img.alt || '';
+		}
+		if (guidedTitle) guidedTitle.textContent = currentCard.querySelector('h3')?.textContent || '';
+		if (guidedMeta) {
+			const reps = currentCard.querySelector('dd')?.textContent || '';
+			guidedMeta.textContent = `Reps/tiempo: ${reps}`;
+		}
+		const index = cards.indexOf(currentCard) + 1;
+		if (guidedIndex) guidedIndex.textContent = `${index}/${cards.length}`;
+		const state = getState(currentCard);
+		if (guidedTimer) guidedTimer.textContent = formatTime(state.remaining);
+		const total = state.selected || getDefaultRest(currentCard);
+		if (guidedProgress) {
+			const progress = total ? ((total - state.remaining) / total) * 100 : 0;
+			guidedProgress.style.height = `${Math.min(Math.max(progress, 0), 100)}%`;
+		}
+	};
+
+	const setCurrentCard = (card, shouldScroll = false) => {
+		if (currentCard) currentCard.classList.remove('is-current');
+		currentCard = card;
+		if (currentCard) currentCard.classList.add('is-current');
+		updateNowBar();
+		updateGuidedOverlay();
+		if (shouldScroll && currentCard && !guidedMode) {
+			currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	};
+
+	const updateNowBar = () => {
+		if (!nowPlaying) return;
+		if (!currentCard || guidedMode) {
+			nowPlaying.classList.add('hidden');
+			return;
+		}
+		nowPlaying.classList.remove('hidden');
+		if (nowTitle) nowTitle.textContent = currentCard.querySelector('h3')?.textContent || '';
+		const state = getState(currentCard);
+		if (nowTimer) nowTimer.textContent = formatTime(state.remaining);
 	};
 
 	const updateProgress = () => {
@@ -76,22 +189,51 @@
 			const total = sectionCards.length;
 			const done = sectionCards.filter((card) => doneMap[card.dataset.exerciseId]).length;
 			const target = section.querySelector('[data-section-progress]');
-			if (target) {
-				target.textContent = `${done}/${total} hechos`;
-			}
+			const bar = section.querySelector('[data-section-progress-bar]');
+			if (target) target.textContent = `${done}/${total} hechos`;
+			if (bar) bar.style.width = `${total ? (done / total) * 100 : 0}%`;
 		});
 	};
 
-	const ensureTimerState = (card) => {
-		if (!stateByCard.has(card)) {
-			stateByCard.set(card, {
-				remaining: 0,
-				running: false,
-				intervalId: null,
-				selected: getDefaultRest(card),
-			});
+	const setDoneState = (card, done) => {
+		const id = card.dataset.exerciseId;
+		const checkbox = card.querySelector('[data-done-checkbox]');
+		card.classList.toggle('is-done', done);
+		if (checkbox) checkbox.checked = done;
+		if (done) {
+			doneMap[id] = true;
+		} else {
+			delete doneMap[id];
 		}
-		return stateByCard.get(card);
+		saveProgress({ done: doneMap });
+		setFormVisibility();
+		updateProgress();
+		if (guidedMode && done) {
+			const next = getNextCard(card, true);
+			if (next) setCurrentCard(next, true);
+		}
+	};
+
+	const notifyComplete = () => {
+		if (soundToggle?.checked) {
+			const ctx = new (window.AudioContext || window.webkitAudioContext)();
+			const osc = ctx.createOscillator();
+			const gain = ctx.createGain();
+			osc.type = 'sine';
+			osc.frequency.value = 880;
+			gain.gain.value = 0.1;
+			osc.connect(gain);
+			gain.connect(ctx.destination);
+			osc.start();
+			setTimeout(() => {
+				osc.stop();
+				ctx.close();
+			}, 300);
+		}
+		if (vibrationToggle?.checked && 'vibrate' in navigator) {
+			navigator.vibrate(200);
+		}
+		showToast('Descanso completo', 'success');
 	};
 
 	const updateTimerUI = (card) => {
@@ -102,7 +244,7 @@
 		const toggleBtn = card.querySelector('[data-action="toggle"]');
 		const resetBtn = card.querySelector('[data-action="reset"]');
 		const doneCta = card.querySelector('[data-action="mark-done"]');
-		const state = ensureTimerState(card);
+		const state = getState(card);
 
 		if (display) display.textContent = formatTime(state.remaining);
 		if (toggleBtn) {
@@ -113,22 +255,23 @@
 		if (startBtn) startBtn.disabled = state.running;
 		if (timer) timer.classList.toggle('is-complete', state.remaining === 0 && !state.running && state.wasComplete);
 
-		if (status) {
-			status.textContent = state.remaining === 0 && state.wasComplete ? 'Descanso completo' : '';
+		if (status) status.textContent = state.remaining === 0 && state.wasComplete ? 'Descanso completo' : '';
+		if (doneCta) doneCta.hidden = !(state.remaining === 0 && state.wasComplete);
+		if (state.wasComplete && !state.notified) {
+			state.notified = true;
+			notifyComplete();
 		}
-		if (doneCta) {
-			doneCta.hidden = !(state.remaining === 0 && state.wasComplete);
-		}
+		if (currentCard === card) updateNowBar();
+		if (guidedMode && currentCard === card) updateGuidedOverlay();
 	};
 
 	const startTimer = (card) => {
-		const state = ensureTimerState(card);
+		const state = getState(card);
 		if (state.running) return;
-		if (state.remaining === 0) {
-			state.remaining = state.selected || getDefaultRest(card);
-		}
+		if (state.remaining === 0) state.remaining = state.selected || getDefaultRest(card);
 		state.running = true;
 		state.wasComplete = false;
+		state.notified = false;
 		updateTimerUI(card);
 		state.intervalId = window.setInterval(() => {
 			state.remaining -= 1;
@@ -144,7 +287,7 @@
 	};
 
 	const toggleTimer = (card) => {
-		const state = ensureTimerState(card);
+		const state = getState(card);
 		if (state.running) {
 			state.running = false;
 			window.clearInterval(state.intervalId);
@@ -167,20 +310,22 @@
 	};
 
 	const resetTimer = (card) => {
-		const state = ensureTimerState(card);
+		const state = getState(card);
 		state.running = false;
 		state.remaining = 0;
 		state.wasComplete = false;
+		state.notified = false;
 		window.clearInterval(state.intervalId);
 		state.intervalId = null;
 		updateTimerUI(card);
 	};
 
 	const selectRest = (card, value) => {
-		const state = ensureTimerState(card);
+		const state = getState(card);
 		state.selected = value;
 		state.remaining = 0;
 		state.wasComplete = false;
+		state.notified = false;
 		const options = card.querySelectorAll('[data-rest-option]');
 		options.forEach((btn) => {
 			btn.classList.toggle('is-active', Number(btn.dataset.restOption) === value);
@@ -188,11 +333,21 @@
 		updateTimerUI(card);
 	};
 
-	const scrollToNext = (card) => {
+	const getNextCard = (card, pendingOnly) => {
 		const index = cards.indexOf(card);
-		if (index === -1) return;
-		const next = cards[index + 1] || cards[0];
-		next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		if (index === -1) return null;
+		for (let step = 1; step <= cards.length; step += 1) {
+			const next = cards[(index + step) % cards.length];
+			if (!pendingOnly) return next;
+			if (!doneMap[next.dataset.exerciseId]) return next;
+		}
+		return null;
+	};
+
+	const scrollToNext = (card) => {
+		const next = getNextCard(card, guidedMode || filterPending?.checked);
+		if (!next) return;
+		setCurrentCard(next, guidedMode);
 	};
 
 	const openSectionsPanel = () => {
@@ -211,34 +366,96 @@
 		if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
 	};
 
+	const initPrefs = () => {
+		if (filterPending) filterPending.checked = Boolean(prefs.filterPending);
+		if (soundToggle) soundToggle.checked = Boolean(prefs.sound);
+		if (vibrationToggle) vibrationToggle.checked = Boolean(prefs.vibration);
+		if (guidedToggle) guidedToggle.setAttribute('data-guided-active', guidedMode ? 'true' : 'false');
+		setFormVisibility();
+	};
+
+	const showGuidedOverlay = () => {
+		if (!guidedOverlay) return;
+		guidedOverlay.classList.remove('hidden');
+		guidedOverlay.setAttribute('aria-hidden', 'false');
+		document.body.classList.add('overflow-hidden');
+		updateGuidedOverlay();
+	};
+
+	const hideGuidedOverlay = () => {
+		if (!guidedOverlay) return;
+		guidedOverlay.classList.add('hidden');
+		guidedOverlay.setAttribute('aria-hidden', 'true');
+		document.body.classList.remove('overflow-hidden');
+	};
+
 	cards.forEach((card) => {
 		const id = card.dataset.exerciseId;
 		const checkbox = card.querySelector('[data-done-checkbox]');
 		selectRest(card, getDefaultRest(card));
-		if (checkbox) {
-			checkbox.checked = Boolean(doneMap[id]);
-		}
+		if (checkbox) checkbox.checked = Boolean(doneMap[id]);
 		card.classList.toggle('is-done', Boolean(doneMap[id]));
 		updateTimerUI(card);
 	});
 
 	updateProgress();
+	initPrefs();
+
+	const activateGuidedMode = () => {
+		guidedMode = true;
+		prefs.guidedMode = true;
+		savePrefs(prefs);
+		guidedToggle?.classList.add('ring-2', 'ring-amber-300/60');
+		const firstPending = cards.find((card) => !doneMap[card.dataset.exerciseId]);
+		setCurrentCard(firstPending || cards[0], true);
+		showGuidedOverlay();
+		showToast('Modo guiado activo', 'warn');
+	};
+
+	const deactivateGuidedMode = () => {
+		guidedMode = false;
+		prefs.guidedMode = false;
+		savePrefs(prefs);
+		guidedToggle?.classList.remove('ring-2', 'ring-amber-300/60');
+		hideGuidedOverlay();
+		updateNowBar();
+		showToast('Modo guiado desactivado');
+	};
 
 	document.addEventListener('change', (event) => {
 		const checkbox = event.target.closest('[data-done-checkbox]');
-		if (!checkbox) return;
-		const card = checkbox.closest('[data-exercise-id]');
-		if (!card) return;
-		setDoneState(card, checkbox.checked);
+		if (checkbox) {
+			const card = checkbox.closest('[data-exercise-id]');
+			if (!card) return;
+			setDoneState(card, checkbox.checked);
+			return;
+		}
+
+		if (event.target.closest('[data-filter-pending]')) {
+			prefs.filterPending = filterPending?.checked;
+			savePrefs(prefs);
+			setFormVisibility();
+			return;
+		}
+
+		if (event.target.closest('[data-sound-toggle]')) {
+			prefs.sound = soundToggle?.checked;
+			savePrefs(prefs);
+			return;
+		}
+
+		if (event.target.closest('[data-vibration-toggle]')) {
+			prefs.vibration = vibrationToggle?.checked;
+			savePrefs(prefs);
+			return;
+		}
 	});
 
 	document.addEventListener('click', (event) => {
 		const restOption = event.target.closest('[data-rest-option]');
 		if (restOption) {
 			const card = restOption.closest('[data-exercise-id]');
-			if (card) {
-				selectRest(card, Number(restOption.dataset.restOption));
-			}
+			if (card) selectRest(card, Number(restOption.dataset.restOption));
 			return;
 		}
 
@@ -247,6 +464,7 @@
 			const card = action.closest('[data-exercise-id]');
 			const type = action.dataset.action;
 			if (!card) return;
+			setCurrentCard(card);
 			if (type === 'start') startTimer(card);
 			if (type === 'toggle') toggleTimer(card);
 			if (type === 'reset') resetTimer(card);
@@ -259,15 +477,44 @@
 			Object.keys(doneMap).forEach((key) => delete doneMap[key]);
 			saveProgress({ done: doneMap });
 			cards.forEach((card) => setDoneState(card, false));
+			showToast('Progreso reiniciado');
+			return;
+		}
+
+		if (event.target.closest('[data-guided-toggle]')) {
+			if (guidedMode) deactivateGuidedMode();
+			else activateGuidedMode();
+			return;
+		}
+
+		if (event.target.closest('[data-guided-close]')) {
+			deactivateGuidedMode();
+			return;
+		}
+
+		if (event.target.closest('[data-guided-start]')) {
+			if (currentCard) startTimer(currentCard);
+			return;
+		}
+
+		if (event.target.closest('[data-guided-pause]')) {
+			if (currentCard) toggleTimer(currentCard);
+			return;
+		}
+
+		if (event.target.closest('[data-guided-next]')) {
+			if (currentCard) scrollToNext(currentCard);
+			return;
+		}
+
+		if (event.target.closest('[data-guided-done]')) {
+			if (currentCard) setDoneState(currentCard, true);
 			return;
 		}
 
 		if (event.target.closest('[data-sections-toggle]')) {
-			if (sectionPanel?.hidden) {
-				openSectionsPanel();
-			} else {
-				closeSectionsPanel();
-			}
+			if (sectionPanel?.hidden) openSectionsPanel();
+			else closeSectionsPanel();
 			return;
 		}
 
@@ -283,8 +530,59 @@
 
 		if (event.target.closest('[data-back-to-top]')) {
 			window.scrollTo({ top: 0, behavior: 'smooth' });
+			return;
+		}
+
+		const cardClick = event.target.closest('[data-exercise-id]');
+		if (cardClick) {
+			setCurrentCard(cardClick);
+		}
+
+		if (event.target.closest('[data-now-start]')) {
+			if (currentCard) startTimer(currentCard);
+		}
+		if (event.target.closest('[data-now-toggle]')) {
+			if (currentCard) toggleTimer(currentCard);
+		}
+		if (event.target.closest('[data-now-done]')) {
+			if (currentCard) setDoneState(currentCard, true);
+		}
+		if (event.target.closest('[data-now-next]')) {
+			if (currentCard) scrollToNext(currentCard);
 		}
 	});
+
+	document.addEventListener('keydown', (event) => {
+		const target = event.target;
+		if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+		if (!currentCard) return;
+		if (event.code === 'Space') {
+			event.preventDefault();
+			const state = getState(currentCard);
+			if (state.running || state.remaining > 0) toggleTimer(currentCard);
+			else startTimer(currentCard);
+		}
+		if (event.key === 'n' || event.key === 'N') {
+			scrollToNext(currentCard);
+		}
+		if (event.key === 'h' || event.key === 'H') {
+			setDoneState(currentCard, true);
+		}
+		if (event.key === 'g' || event.key === 'G') {
+			if (guidedMode) deactivateGuidedMode();
+			else activateGuidedMode();
+		}
+		if (event.key === 'p' || event.key === 'P') {
+			if (filterPending) {
+				filterPending.checked = !filterPending.checked;
+				prefs.filterPending = filterPending.checked;
+				savePrefs(prefs);
+				setFormVisibility();
+			}
+		}
+	});
+
+	if (guidedMode) activateGuidedMode();
 
 	const handleScroll = () => {
 		if (!backToTop) return;

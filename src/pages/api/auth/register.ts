@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { createSession, hashPassword, buildSessionCookie } from '../../../lib/auth';
 import { getPool } from '../../../lib/db';
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const body = await request.json();

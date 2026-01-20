@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { getSessionUser } from '../../../lib/auth';
 
+export const prerender = false;
+
 export const GET: APIRoute = async ({ request }) => {
 	try {
 		const user = await getSessionUser(request);

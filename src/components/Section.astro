@@ -16,6 +16,9 @@ const { id, title, description, count } = Astro.props;
 			)}
 			<span class="text-sm text-slate-300" data-section-progress></span>
 		</div>
+		<div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-900/70">
+			<div class="h-full w-0 bg-gradient-to-r from-amber-300 to-emerald-400" data-section-progress-bar></div>
+		</div>
 		{description && <p class="max-w-3xl text-slate-300">{description}</p>}
 	</header>
 	<div class="grid gap-6 md:grid-cols-2">

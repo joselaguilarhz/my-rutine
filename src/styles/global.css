@@ -97,6 +97,14 @@
 		@apply line-through text-slate-400;
 	}
 
+	.exercise-card.is-current {
+		@apply ring-2 ring-amber-300/70;
+	}
+
+	.exercise-card.is-hidden {
+		@apply hidden;
+	}
+
 	.exercise-card__timer.is-complete [data-timer-display] {
 		@apply text-emerald-300;
 	}
