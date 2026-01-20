@@ -1,96 +1,32 @@
----
+﻿---
 const today = new Date();
 ---
 
-<footer>
-	<div class="footer-inner">
-		<div>
-			<h3>Rutina Full Body</h3>
-			<p>Entrenamiento completo, simple y claro para casa.</p>
+<footer class="border-t border-slate-800/60 bg-slate-950/90 px-6 py-12">
+	<div class="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-3">
+		<div class="space-y-3">
+			<h3 class="font-display text-lg text-slate-100">Rutina Full Body</h3>
+			<p class="text-sm text-slate-400">Entrenamiento completo, simple y claro para casa.</p>
 		</div>
-		<div>
-			<h3>Atajos</h3>
-			<nav class="footer-links">
-				<a href="/">Rutina</a>
-				<a href="/#calentamiento">Calentamiento</a>
-				<a href="/#piernas">Piernas</a>
-				<a href="/#core">Core</a>
-				<a href="/blog">Blog</a>
-				<a href="/about">Sobre</a>
+		<div class="space-y-3">
+			<h3 class="font-display text-lg text-slate-100">Atajos</h3>
+			<nav class="grid grid-cols-2 gap-2 text-sm text-slate-400">
+				<a class="hover:text-amber-300" href="/">Rutina</a>
+				<a class="hover:text-amber-300" href="/#calentamiento">Calentamiento</a>
+				<a class="hover:text-amber-300" href="/#piernas">Piernas</a>
+				<a class="hover:text-amber-300" href="/#core">Core</a>
+				<a class="hover:text-amber-300" href="/profile">Perfil</a>
+				<a class="hover:text-amber-300" href="/#finisher">Finisher</a>
 			</nav>
 		</div>
-		<div>
-			<h3>Tip rapido</h3>
-			<p>Prioriza tecnica y descanso. Sube nivel cuando completes todas las series con buena forma.</p>
+		<div class="space-y-3">
+			<h3 class="font-display text-lg text-slate-100">Tip rapido</h3>
+			<p class="text-sm text-slate-400">
+				Prioriza tecnica y descanso. Sube nivel cuando completes todas las series con buena forma.
+			</p>
 		</div>
 	</div>
-	<p class="footer-copy">&copy; {today.getFullYear()} Rutina Full Body. Todos los derechos reservados.</p>
+	<p class="mx-auto mt-8 w-full max-w-6xl text-xs text-slate-500">
+		&copy; {today.getFullYear()} Rutina Full Body. Todos los derechos reservados.
+	</p>
 </footer>
-<style>
-	footer {
-		padding: 3rem 1.5rem 4rem;
-		background: rgba(8, 12, 20, 0.98);
-		color: rgba(226, 232, 240, 0.8);
-	}
-
-	.footer-inner {
-		max-width: 1100px;
-		margin: 0 auto;
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 2rem;
-	}
-
-	footer h3 {
-		margin: 0 0 0.5rem;
-		color: #f8fafc;
-		font-size: 1.05rem;
-	}
-
-	footer p {
-		margin: 0;
-		color: rgba(226, 232, 240, 0.7);
-		line-height: 1.6;
-		font-size: 0.95rem;
-	}
-
-	.footer-links {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.35rem 1rem;
-	}
-
-	.footer-links a {
-		color: rgba(226, 232, 240, 0.8);
-		text-decoration: none;
-		font-size: 0.95rem;
-	}
-
-	.footer-links a:hover {
-		color: #facc15;
-	}
-
-	.footer-copy {
-		margin: 2rem auto 0;
-		text-align: center;
-		color: rgba(226, 232, 240, 0.5);
-		font-size: 0.85rem;
-		max-width: 1100px;
-	}
-
-	@media (max-width: 900px) {
-		.footer-inner {
-			grid-template-columns: 1fr;
-		}
-
-		.footer-links {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-		}
-	}
-
-	@media (max-width: 600px) {
-		.footer-links {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-</style>

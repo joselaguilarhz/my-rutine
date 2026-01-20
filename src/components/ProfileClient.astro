@@ -1,0 +1,190 @@
+﻿---
+---
+
+<script>
+	const form = document.querySelector('[data-profile-form]');
+	const status = document.querySelector('[data-profile-status]');
+	const resetButton = document.querySelector('[data-profile-reset]');
+	const bmrOutput = document.querySelector('[data-bmr]');
+	const tdeeOutput = document.querySelector('[data-tdee]');
+	const proteinOutput = document.querySelector('[data-protein]');
+	const waterOutput = document.querySelector('[data-water]');
+
+	const registerForm = document.querySelector('[data-register-form]');
+	const loginForm = document.querySelector('[data-login-form]');
+	const registerStatus = document.querySelector('[data-register-status]');
+	const loginStatus = document.querySelector('[data-login-status]');
+	const sessionStatus = document.querySelector('[data-session-status]');
+	const logoutButton = document.querySelector('[data-logout]');
+
+	const request = async (url, options = {}) => {
+		const response = await fetch(url, {
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			...options,
+		});
+		const data = await response.json().catch(() => ({}));
+		return { ok: response.ok, status: response.status, data };
+	};
+
+	const setStatus = (node, message) => {
+		if (!node) return;
+		node.textContent = message;
+		setTimeout(() => {
+			if (node.textContent === message) node.textContent = '';
+		}, 3000);
+	};
+
+	const serializeForm = () => {
+		const data = new FormData(form);
+		return Object.fromEntries(data.entries());
+	};
+
+	const fillForm = (profile) => {
+		if (!profile) return;
+		Object.entries(profile).forEach(([key, value]) => {
+			const field = form.elements.namedItem(key);
+			if (field && value !== null && value !== undefined) field.value = value;
+		});
+	};
+
+	const calculateMetrics = () => {
+		const data = serializeForm();
+		const weight = Number(data.weight || 0);
+		const height = Number(data.height || 0);
+		const age = Number(data.age || 0);
+		const activity = Number(data.activity || 1.2);
+		const sex = data.sex || 'male';
+		const base = 10 * weight + 6.25 * height - 5 * age;
+		const bmr = Math.max(0, Math.round(base + (sex === 'male' ? 5 : -161)));
+		const tdee = Math.max(0, Math.round(bmr * activity));
+		const protein = Math.max(0, Math.round(weight * 1.6));
+		const water = Math.max(0, (weight * 0.035).toFixed(1));
+
+		if (bmrOutput) bmrOutput.textContent = `${bmr} kcal`;
+		if (tdeeOutput) tdeeOutput.textContent = `${tdee} kcal`;
+		if (proteinOutput) proteinOutput.textContent = `${protein} g`;
+		if (waterOutput) waterOutput.textContent = `${water} L`;
+	};
+
+	const setFormEnabled = (enabled) => {
+		if (!form) return;
+		Array.from(form.elements).forEach((element) => {
+			element.disabled = !enabled;
+		});
+		form.classList.toggle('opacity-60', !enabled);
+		form.classList.toggle('pointer-events-none', !enabled);
+	};
+
+	const setSession = (email) => {
+		if (sessionStatus) sessionStatus.textContent = `Sesion activa: ${email}`;
+		setFormEnabled(true);
+	};
+
+	const clearSession = () => {
+		if (sessionStatus) sessionStatus.textContent = 'Sin sesion activa';
+		setFormEnabled(false);
+	};
+
+	const loadProfile = async () => {
+		const { ok, data } = await request('/api/profile', { method: 'GET' });
+		if (ok && data.profile) {
+			fillForm(data.profile);
+			calculateMetrics();
+		}
+	};
+
+	const handleRegister = async (event) => {
+		event.preventDefault();
+		const data = new FormData(registerForm);
+		const email = String(data.get('email') || '').trim();
+		const password = String(data.get('password') || '');
+		const { ok, data: resp } = await request('/api/auth/register', {
+			method: 'POST',
+			body: JSON.stringify({ email, password }),
+		});
+		if (!ok) {
+			setStatus(registerStatus, resp.error || 'Error al registrar');
+			return;
+		}
+		setStatus(registerStatus, 'Cuenta creada');
+		setSession(email);
+		await loadProfile();
+	};
+
+	const handleLogin = async (event) => {
+		event.preventDefault();
+		const data = new FormData(loginForm);
+		const email = String(data.get('email') || '').trim();
+		const password = String(data.get('password') || '');
+		const { ok, data: resp } = await request('/api/auth/login', {
+			method: 'POST',
+			body: JSON.stringify({ email, password }),
+		});
+		if (!ok) {
+			setStatus(loginStatus, resp.error || 'Error al iniciar');
+			return;
+		}
+		setStatus(loginStatus, 'Sesion iniciada');
+		setSession(email);
+		await loadProfile();
+	};
+
+	const handleSave = async (event) => {
+		event.preventDefault();
+		const payload = serializeForm();
+		const { ok, data } = await request('/api/profile', {
+			method: 'POST',
+			body: JSON.stringify(payload),
+		});
+		if (!ok) {
+			setStatus(status, data.error || 'Error al guardar');
+			return;
+		}
+		setStatus(status, 'Guardado');
+	};
+
+	const handleReset = async () => {
+		if (!form) return;
+		const { ok, data } = await request('/api/profile', {
+			method: 'POST',
+			body: JSON.stringify({ reset: true }),
+		});
+		if (!ok) {
+			setStatus(status, data.error || 'No se pudo limpiar');
+			return;
+		}
+		form.reset();
+		calculateMetrics();
+		setStatus(status, 'Perfil limpio');
+	};
+
+	const handleLogout = async () => {
+		await request('/api/auth/logout', { method: 'POST' });
+		clearSession();
+		setStatus(loginStatus, 'Sesion cerrada');
+	};
+
+	const initSession = async () => {
+		const { ok, data } = await request('/api/auth/session', { method: 'GET' });
+		if (ok && data.user?.email) {
+			setSession(data.user.email);
+			await loadProfile();
+			return;
+		}
+		clearSession();
+	};
+
+	if (registerForm) registerForm.addEventListener('submit', handleRegister);
+	if (loginForm) loginForm.addEventListener('submit', handleLogin);
+	if (form) {
+		form.addEventListener('submit', handleSave);
+		form.addEventListener('input', calculateMetrics);
+	}
+	resetButton?.addEventListener('click', handleReset);
+	logoutButton?.addEventListener('click', handleLogout);
+
+	calculateMetrics();
+	clearSession();
+	initSession();
+</script>

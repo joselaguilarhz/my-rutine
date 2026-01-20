@@ -1,69 +1,24 @@
----
+﻿---
 const { id, title, description, count } = Astro.props;
 ---
 
-<section class="routine-section" id={id} data-section-id={id} data-section-total={count}>
-	<header class="routine-section__header">
-		<div class="routine-section__title">
-			<h2>{title}</h2>
-			{count && <span class="routine-section__count">{count} ejercicios</span>}
+<section
+	id={id}
+	data-section-id={id}
+	data-section-total={count}
+	class="scroll-mt-28 flex flex-col gap-6"
+>
+	<header class="flex flex-col gap-2">
+		<div class="flex flex-wrap items-baseline gap-3">
+			<h2 class="font-display text-2xl md:text-3xl text-slate-100">{title}</h2>
+			{count && (
+				<span class="text-[0.7rem] uppercase tracking-[0.3em] text-slate-400">{count} ejercicios</span>
+			)}
+			<span class="text-sm text-slate-300" data-section-progress></span>
 		</div>
-		<span class="routine-section__progress" data-section-progress></span>
-		{description && <p>{description}</p>}
+		{description && <p class="max-w-3xl text-slate-300">{description}</p>}
 	</header>
-	<div class="routine-section__grid">
+	<div class="grid gap-6 md:grid-cols-2">
 		<slot />
 	</div>
 </section>
-
-<style>
-	.routine-section {
-		display: grid;
-		gap: 1.5rem;
-		scroll-margin-top: 120px;
-	}
-
-	.routine-section__title {
-		display: flex;
-		align-items: baseline;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.routine-section__header h2 {
-		margin: 0;
-		font-size: 2rem;
-		color: #f8fafc;
-	}
-
-	.routine-section__count {
-		font-size: 0.85rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: rgba(226, 232, 240, 0.6);
-	}
-
-	.routine-section__progress {
-		color: rgba(226, 232, 240, 0.7);
-		font-size: 0.95rem;
-	}
-
-	.routine-section__header p {
-		margin: 0.35rem 0 0;
-		color: rgba(226, 232, 240, 0.7);
-		font-size: 1.05rem;
-		max-width: 55ch;
-	}
-
-	.routine-section__grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1.5rem;
-	}
-
-	@media (max-width: 900px) {
-		.routine-section__grid {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>

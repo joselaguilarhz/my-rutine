@@ -1,4 +1,4 @@
----
+﻿---
 ---
 
 <script>
@@ -195,6 +195,22 @@
 		next.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	};
 
+	const openSectionsPanel = () => {
+		if (sectionPanel) sectionPanel.hidden = false;
+		sectionPanel?.classList.remove('hidden');
+		sectionOverlay?.classList.remove('pointer-events-none', 'opacity-0');
+		sectionOverlay?.classList.add('pointer-events-auto', 'opacity-100');
+		if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'true');
+	};
+
+	const closeSectionsPanel = () => {
+		if (sectionPanel) sectionPanel.hidden = true;
+		sectionPanel?.classList.add('hidden');
+		sectionOverlay?.classList.remove('pointer-events-auto', 'opacity-100');
+		sectionOverlay?.classList.add('pointer-events-none', 'opacity-0');
+		if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
+	};
+
 	cards.forEach((card) => {
 		const id = card.dataset.exerciseId;
 		const checkbox = card.querySelector('[data-done-checkbox]');
@@ -247,31 +263,21 @@
 		}
 
 		if (event.target.closest('[data-sections-toggle]')) {
-			sectionPanel?.classList.toggle('is-open');
-			sectionOverlay?.classList.toggle('is-open');
-			if (sectionPanel) {
-				sectionPanel.hidden = !sectionPanel.classList.contains('is-open');
-			}
-			if (sectionToggle) {
-				const expanded = sectionPanel?.classList.contains('is-open');
-				sectionToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			if (sectionPanel?.hidden) {
+				openSectionsPanel();
+			} else {
+				closeSectionsPanel();
 			}
 			return;
 		}
 
 		if (event.target.closest('[data-sections-overlay]')) {
-			sectionPanel?.classList.remove('is-open');
-			sectionOverlay?.classList.remove('is-open');
-			if (sectionPanel) sectionPanel.hidden = true;
-			if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
+			closeSectionsPanel();
 			return;
 		}
 
 		if (event.target.closest('[data-sections-panel] a')) {
-			sectionPanel?.classList.remove('is-open');
-			sectionOverlay?.classList.remove('is-open');
-			if (sectionPanel) sectionPanel.hidden = true;
-			if (sectionToggle) sectionToggle.setAttribute('aria-expanded', 'false');
+			closeSectionsPanel();
 			return;
 		}
 
@@ -282,7 +288,12 @@
 
 	const handleScroll = () => {
 		if (!backToTop) return;
-		backToTop.classList.toggle('is-visible', window.scrollY > 400);
+		const visible = window.scrollY > 400;
+		backToTop.classList.toggle('opacity-100', visible);
+		backToTop.classList.toggle('pointer-events-auto', visible);
+		backToTop.classList.toggle('-translate-y-1', visible);
+		backToTop.classList.toggle('opacity-0', !visible);
+		backToTop.classList.toggle('pointer-events-none', !visible);
 	};
 
 	handleScroll();

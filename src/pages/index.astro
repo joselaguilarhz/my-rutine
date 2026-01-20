@@ -252,90 +252,127 @@ const totalExercises = routineSections.reduce((sum, section) => sum + section.ex
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="routine-body">
+	<body>
 		<Header />
-		<main class="routine">
-			<section class="routine-hero">
-				<p class="routine-hero__badge">Rutina full body en casa</p>
-				<h1>Entrena todo el cuerpo con peso corporal y mochila</h1>
-				<p>
-					Una rutina completa, clara y progresiva para entrenar en casa. Ajusta el descanso segun tu nivel y
-					manten una tecnica limpia en cada repeticion.
-				</p>
-				<div class="routine-hero__chips">
-					<span>45-60 min</span>
-					<span>Sin gimnasio</span>
-					<span>Material opcional</span>
+		<main class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-10">
+			<section class="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
+				<div class="flex flex-col gap-6">
+					<p class="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-amber-300">
+						Rutina full body en casa
+					</p>
+					<h1 class="font-display text-3xl leading-tight text-slate-50 md:text-5xl">
+						Entrena todo el cuerpo con ritmo y control
+					</h1>
+					<p class="max-w-2xl text-base text-slate-300">
+						Una experiencia de rutina guiada para casa: marca avances, controla descansos y
+						manten el flujo sin perder foco.
+					</p>
+					<div class="flex flex-wrap gap-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+						<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">45-60 min</span>
+						<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">Sin gimnasio</span>
+						<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">Material opcional</span>
+					</div>
+					<div class="flex flex-wrap gap-3">
+						<a
+							href="#calentamiento"
+							class="rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-950"
+						>
+							Comenzar
+						</a>
+						<a
+							href="#finisher"
+							class="rounded-full border border-slate-700/60 bg-slate-900/70 px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-200"
+						>
+							Ver cierre
+						</a>
+					</div>
+				</div>
+				<div class="glass-panel flex flex-col gap-4 p-6">
+					<h2 class="font-display text-xl text-slate-100">Tu sesion de hoy</h2>
+					<p class="text-sm text-slate-300">
+						Completa cada bloque y marca el avance para ver el progreso en tiempo real.
+					</p>
+					<div class="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-400">
+						<span>Total ejercicios</span>
+						<span>{totalExercises}</span>
+					</div>
+					<div class="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-400">
+						<span>Descanso recomendado</span>
+						<span>45-60 s</span>
+					</div>
+					<div class="rounded-xl border border-slate-700/40 bg-slate-950/70 p-4 text-sm text-slate-300">
+						Empieza con el calentamiento completo y descansa 1-2 min entre secciones si lo necesitas.
+					</div>
 				</div>
 			</section>
 
-			<section class="routine-overview">
-				<div class="routine-overview__card">
-					<h2>Como usar la rutina</h2>
-					<ul>
-						<li>Haz el calentamiento completo antes de empezar.</li>
-						<li>Descansa 1-2 min entre secciones si lo necesitas.</li>
-						<li>Prioriza la tecnica sobre la velocidad.</li>
-					</ul>
-				</div>
-				<nav class="routine-overview__nav" aria-label="Indice de secciones">
-					<h2>Secciones</h2>
-					<div class="routine-overview__links">
+			<section class="grid gap-6 md:grid-cols-[1.2fr,0.8fr]">
+				<div class="glass-panel flex flex-col gap-4 p-6">
+					<h2 class="font-display text-lg text-slate-100">Indice de secciones</h2>
+					<div class="grid gap-2">
 						{routineSummary.map((item) => (
-							<a href={`#${item.id}`}>
+							<a
+								href={`#${item.id}`}
+								class="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/60 px-4 py-3 text-sm text-slate-200"
+							>
 								<span>{item.title}</span>
-								<em>{item.count} ejercicios</em>
+								<em class="text-xs not-italic uppercase tracking-[0.2em] text-slate-400">
+									{item.count} ejercicios
+								</em>
 							</a>
 						))}
 					</div>
-				</nav>
-			</section>
-
-			<section class="routine-progress" aria-live="polite">
-				<div>
-					<h2>Progreso de hoy</h2>
-					<p>
+				</div>
+				<section class="glass-panel flex flex-col gap-4 p-6" aria-live="polite">
+					<h2 class="font-display text-lg text-slate-100">Progreso de hoy</h2>
+					<p class="text-sm text-slate-300">
 						<span data-progress-count>0</span> / <span data-progress-total>{totalExercises}</span> ejercicios
 						completados
 					</p>
-				</div>
-				<div class="routine-progress__bar">
-					<div class="routine-progress__fill" data-progress-fill></div>
-				</div>
-				<button class="routine-progress__reset" type="button" data-reset-today>Reset de hoy</button>
+					<div class="h-2 w-full overflow-hidden rounded-full bg-slate-900">
+						<div class="h-full w-0 bg-gradient-to-r from-amber-300 to-emerald-400" data-progress-fill></div>
+					</div>
+					<button
+						class="w-fit rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+						type="button"
+						data-reset-today
+					>
+						Reset de hoy
+					</button>
+				</section>
 			</section>
 
-			<section class="routine-info">
-				<div class="routine-info__card">
-					<h2>Equipo y espacio</h2>
-					<p>Necesitas una silla estable, una mochila con peso y una colchoneta.</p>
-					<ul>
-						<li>Mochila: libros o botellas para ajustar carga.</li>
+			<section class="grid gap-6 lg:grid-cols-3">
+				<div class="glass-panel flex flex-col gap-3 p-5">
+					<h3 class="font-display text-base text-slate-100">Equipo y espacio</h3>
+					<p class="text-sm text-slate-300">Silla estable, mochila con peso y colchoneta.</p>
+					<ul class="grid gap-1 text-sm text-slate-400">
+						<li>Mochila: libros o botellas.</li>
 						<li>Espacio: 2x2 metros libres.</li>
-						<li>Suelo antideslizante para seguridad.</li>
+						<li>Suelo antideslizante.</li>
 					</ul>
 				</div>
-				<div class="routine-info__card">
-					<h2>Frecuencia sugerida</h2>
-					<p>Haz esta rutina 2-4 veces por semana segun tu nivel.</p>
-					<ul>
-						<li>Principiante: 2 dias con 1 dia de descanso.</li>
-						<li>Intermedio: 3 dias alternos.</li>
-						<li>Avanzado: 4 dias con intensidad moderada.</li>
+				<div class="glass-panel flex flex-col gap-3 p-5">
+					<h3 class="font-display text-base text-slate-100">Frecuencia sugerida</h3>
+					<p class="text-sm text-slate-300">2-4 sesiones por semana segun tu nivel.</p>
+					<ul class="grid gap-1 text-sm text-slate-400">
+						<li>Principiante: 2 dias.</li>
+						<li>Intermedio: 3 dias.</li>
+						<li>Avanzado: 4 dias.</li>
 					</ul>
 				</div>
-				<div class="routine-info__card">
-					<h2>Cierre y estiramiento</h2>
-					<p>Dedica 5-8 minutos a bajar pulsaciones y estirar.</p>
-					<ul>
-						<li>Respiracion profunda y lenta.</li>
-						<li>Estira piernas, pecho y espalda.</li>
-						<li>Hidrata y registra tu progreso.</li>
+				<div class="glass-panel flex flex-col gap-3 p-5">
+					<h3 class="font-display text-base text-slate-100">Cierre y estiramiento</h3>
+					<p class="text-sm text-slate-300">Baja pulsaciones y recupera mejor.</p>
+					<ul class="grid gap-1 text-sm text-slate-400">
+						<li>Respiracion profunda.</li>
+						<li>Estira piernas y espalda.</li>
+						<li>Hidrata y registra progreso.</li>
 					</ul>
 				</div>
 			</section>
 
-			<div class="routine-sections">
+			<section class="flex flex-col gap-10">
 				{routineSections.map((section) => (
 					<Section
 						id={section.id}
@@ -353,412 +390,57 @@ const totalExercises = routineSections.reduce((sum, section) => sum + section.ex
 						))}
 					</Section>
 				))}
-			</div>
+			</section>
+
+			<section class="glass-panel flex flex-col gap-4 p-6">
+				<h2 class="font-display text-xl text-slate-100">Salida limpia</h2>
+				<p class="text-sm text-slate-300">
+					Has terminado? Guarda tu perfil y vuelve cuando quieras continuar tu progreso.
+				</p>
+				<a
+					href="/profile"
+					class="w-fit rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+				>
+					Ir al perfil
+				</a>
+			</section>
 		</main>
-		<button class="floating-button" type="button" data-sections-toggle aria-expanded="false">
+
+		<button
+			class="fixed bottom-6 left-6 z-20 inline-flex rounded-full border border-slate-700/60 bg-slate-900/80 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200 md:hidden"
+			type="button"
+			data-sections-toggle
+			aria-expanded="false"
+		>
 			Secciones
 		</button>
-		<div class="floating-panel" data-sections-panel hidden>
-			<h3>Ir a seccion</h3>
-			<nav>
+		<div
+			class="fixed inset-0 z-10 bg-slate-950/70 opacity-0 pointer-events-none transition"
+			data-sections-overlay
+		></div>
+		<div
+			class="fixed bottom-20 left-6 z-20 hidden w-[min(260px,calc(100vw-3rem))] flex flex-col gap-4 rounded-2xl border border-slate-700/50 bg-slate-950/95 p-4"
+			data-sections-panel
+			hidden
+		>
+			<h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Ir a seccion</h3>
+			<nav class="grid gap-2 text-sm text-slate-200">
 				{routineSummary.map((item) => (
-					<a href={`#${item.id}`}>{item.title}</a>
+					<a class="rounded-xl bg-slate-900/70 px-3 py-2" href={`#${item.id}`}>
+						{item.title}
+					</a>
 				))}
 			</nav>
 		</div>
-		<div class="floating-overlay" data-sections-overlay></div>
-		<button class="back-to-top" type="button" data-back-to-top aria-label="Volver arriba">
+		<button
+			class="fixed bottom-6 right-6 z-20 rounded-full bg-amber-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 opacity-0 pointer-events-none transition"
+			type="button"
+			data-back-to-top
+			aria-label="Volver arriba"
+		>
 			Arriba
 		</button>
 		<Footer />
 		<RoutineClient />
 	</body>
 </html>
-
-<style>
-	:global(body.routine-body) {
-		background: radial-gradient(circle at top, #1f2a44 0%, #0b0e14 55%, #070a10 100%);
-		color: #e2e8f0;
-	}
-
-	:global(body.routine-body main) {
-		width: min(1100px, calc(100% - 2.5rem));
-	}
-
-	.routine {
-		padding: 3.5rem 0 4rem;
-		display: grid;
-		gap: 3rem;
-	}
-
-	.routine-hero {
-		display: grid;
-		gap: 1rem;
-		background: linear-gradient(135deg, rgba(23, 32, 50, 0.95), rgba(8, 11, 18, 0.95));
-		border-radius: 24px;
-		padding: 2.5rem;
-		border: 1px solid rgba(148, 163, 184, 0.2);
-		box-shadow: 0 30px 70px rgba(5, 8, 15, 0.55);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.routine-hero::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background:
-			radial-gradient(circle at top right, rgba(250, 204, 21, 0.08), transparent 55%),
-			radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 60%);
-		pointer-events: none;
-	}
-
-	.routine-hero__badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		background: rgba(250, 204, 21, 0.15);
-		color: #facc15;
-		padding: 0.35rem 0.85rem;
-		border-radius: 999px;
-		font-size: 0.85rem;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		margin: 0;
-	}
-
-	.routine-hero h1 {
-		font-size: clamp(2.1rem, 3vw, 3rem);
-		margin: 0;
-		color: #f8fafc;
-	}
-
-	.routine-hero p {
-		margin: 0;
-		color: rgba(226, 232, 240, 0.82);
-		font-size: 1.05rem;
-		max-width: 60ch;
-	}
-
-	.routine-hero__chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-	}
-
-	.routine-hero__chips span {
-		background: rgba(15, 23, 42, 0.7);
-		border: 1px solid rgba(148, 163, 184, 0.2);
-		padding: 0.4rem 0.9rem;
-		border-radius: 999px;
-		font-size: 0.9rem;
-	}
-
-	.routine-overview {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1.5rem;
-	}
-
-	.routine-overview__card,
-	.routine-overview__nav {
-		background: rgba(12, 16, 24, 0.8);
-		border: 1px solid rgba(148, 163, 184, 0.18);
-		border-radius: 20px;
-		padding: 1.75rem;
-		display: grid;
-		gap: 1rem;
-	}
-
-	.routine-overview h2 {
-		margin: 0;
-		font-size: 1.4rem;
-		color: #f8fafc;
-	}
-
-	.routine-overview ul {
-		margin: 0;
-		padding-left: 1.2rem;
-		color: rgba(226, 232, 240, 0.8);
-		display: grid;
-		gap: 0.5rem;
-	}
-
-	.routine-overview__links {
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.routine-overview__links a {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.75rem 1rem;
-		border-radius: 14px;
-		background: rgba(15, 23, 42, 0.6);
-		border: 1px solid rgba(148, 163, 184, 0.15);
-		text-decoration: none;
-		color: #e2e8f0;
-		transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-	}
-
-	.routine-overview__links a:hover {
-		transform: translateY(-2px);
-		border-color: rgba(250, 204, 21, 0.5);
-		background: rgba(15, 23, 42, 0.85);
-	}
-
-	.routine-overview__links em {
-		font-style: normal;
-		color: rgba(226, 232, 240, 0.6);
-		font-size: 0.9rem;
-	}
-
-	.routine-progress {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
-		align-items: center;
-		gap: 1.5rem;
-		background: rgba(12, 16, 24, 0.8);
-		border: 1px solid rgba(148, 163, 184, 0.18);
-		border-radius: 20px;
-		padding: 1.5rem 1.75rem;
-	}
-
-	.routine-progress h2 {
-		margin: 0 0 0.35rem;
-		font-size: 1.4rem;
-		color: #f8fafc;
-	}
-
-	.routine-progress p {
-		margin: 0;
-		color: rgba(226, 232, 240, 0.7);
-		font-size: 0.95rem;
-	}
-
-	.routine-progress__bar {
-		position: relative;
-		height: 10px;
-		background: rgba(15, 23, 42, 0.6);
-		border-radius: 999px;
-		overflow: hidden;
-	}
-
-	.routine-progress__fill {
-		position: absolute;
-		inset: 0;
-		width: 0%;
-		background: linear-gradient(90deg, rgba(250, 204, 21, 0.9), rgba(34, 197, 94, 0.9));
-		transition: width 0.3s ease;
-	}
-
-	.routine-progress__reset {
-		background: transparent;
-		border: 1px solid rgba(148, 163, 184, 0.35);
-		color: rgba(226, 232, 240, 0.8);
-		padding: 0.55rem 1rem;
-		border-radius: 999px;
-		cursor: pointer;
-	}
-
-	.routine-progress__reset:focus-visible {
-		outline: 2px solid #facc15;
-		outline-offset: 2px;
-	}
-
-	.routine-info {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 1.5rem;
-	}
-
-	.routine-info__card {
-		background: rgba(12, 16, 24, 0.8);
-		border: 1px solid rgba(148, 163, 184, 0.18);
-		border-radius: 20px;
-		padding: 1.6rem;
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.routine-info__card h2 {
-		margin: 0;
-		font-size: 1.2rem;
-		color: #f8fafc;
-	}
-
-	.routine-info__card p {
-		margin: 0;
-		color: rgba(226, 232, 240, 0.7);
-		font-size: 0.95rem;
-	}
-
-	.routine-info__card ul {
-		margin: 0;
-		padding-left: 1.1rem;
-		color: rgba(226, 232, 240, 0.78);
-		display: grid;
-		gap: 0.35rem;
-		font-size: 0.95rem;
-	}
-
-	.routine-sections {
-		display: grid;
-		gap: 3rem;
-	}
-
-	:global(body.routine-body a) {
-		color: #facc15;
-	}
-
-	:global(body.routine-body button) {
-		font-family: inherit;
-	}
-
-	:global(body.routine-body a:focus-visible),
-	:global(body.routine-body button:focus-visible),
-	:global(body.routine-body input:focus-visible) {
-		outline: 2px solid #facc15;
-		outline-offset: 2px;
-	}
-
-	:global(body.routine-body .exercise-card) {
-		animation: rise 0.6s ease both;
-	}
-
-	@keyframes rise {
-		from {
-			opacity: 0;
-			transform: translateY(16px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		:global(body.routine-body .exercise-card) {
-			animation: none;
-		}
-	}
-
-	@media (max-width: 720px) {
-		.routine-hero {
-			padding: 1.75rem;
-		}
-
-		.routine-overview {
-			grid-template-columns: 1fr;
-		}
-
-		.routine-progress {
-			grid-template-columns: 1fr;
-			gap: 1rem;
-		}
-
-		.routine-info {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	.floating-button {
-		position: fixed;
-		bottom: 1.5rem;
-		left: 1.5rem;
-		background: rgba(15, 23, 42, 0.9);
-		color: #f8fafc;
-		border: 1px solid rgba(148, 163, 184, 0.3);
-		padding: 0.65rem 1rem;
-		border-radius: 999px;
-		display: none;
-		z-index: 20;
-	}
-
-	.floating-panel {
-		position: fixed;
-		bottom: 4.5rem;
-		left: 1.5rem;
-		background: rgba(8, 12, 20, 0.98);
-		border: 1px solid rgba(148, 163, 184, 0.3);
-		border-radius: 16px;
-		padding: 1rem;
-		width: min(260px, calc(100vw - 3rem));
-		display: grid;
-		gap: 0.75rem;
-		z-index: 20;
-	}
-
-	.floating-panel h3 {
-		margin: 0;
-		font-size: 1rem;
-		color: #f8fafc;
-	}
-
-	.floating-panel nav {
-		display: grid;
-		gap: 0.5rem;
-	}
-
-	.floating-panel a {
-		text-decoration: none;
-		color: rgba(226, 232, 240, 0.8);
-		padding: 0.4rem 0.5rem;
-		border-radius: 10px;
-		background: rgba(15, 23, 42, 0.6);
-	}
-
-	.floating-panel a:hover {
-		color: #facc15;
-	}
-
-	.floating-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.2s ease;
-		z-index: 15;
-	}
-
-	.floating-overlay.is-open {
-		opacity: 1;
-		pointer-events: auto;
-	}
-
-	.floating-panel.is-open {
-		display: grid;
-	}
-
-	.back-to-top {
-		position: fixed;
-		right: 1.5rem;
-		bottom: 1.5rem;
-		background: #facc15;
-		color: #0b0e14;
-		border: none;
-		padding: 0.6rem 0.9rem;
-		border-radius: 999px;
-		font-weight: 600;
-		cursor: pointer;
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.2s ease, transform 0.2s ease;
-		z-index: 20;
-	}
-
-	.back-to-top.is-visible {
-		opacity: 1;
-		pointer-events: auto;
-		transform: translateY(-4px);
-	}
-
-	@media (max-width: 960px) {
-		.floating-button {
-			display: inline-flex;
-		}
-	}
-</style>
