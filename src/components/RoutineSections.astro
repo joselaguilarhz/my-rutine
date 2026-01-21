@@ -1,0 +1,26 @@
+---
+import ExerciseCard from './ExerciseCard.astro';
+import Section from './Section.astro';
+
+const { sections, getDefaultRest } = Astro.props;
+---
+
+<section class="flex flex-col gap-10">
+	{sections.map((section) => (
+		<Section
+			id={section.id}
+			title={section.title}
+			description={section.description}
+			count={section.exercises.length}
+		>
+			{section.exercises.map((exercise, index) => (
+				<ExerciseCard
+					{...exercise}
+					order={index + 1}
+					sectionId={section.id}
+					restSeconds={getDefaultRest(exercise.rest)}
+				/>
+			))}
+		</Section>
+	))}
+</section>

@@ -7,7 +7,12 @@
 	const prefsKey = 'routine-preferences';
 	const cards = Array.from(document.querySelectorAll('[data-exercise-id]'));
 	const sections = Array.from(document.querySelectorAll('[data-section-id]'));
-	const totalCount = cards.length;
+	const totalExerciseNodes = Array.from(document.querySelectorAll('[data-total-exercises]'));
+	const summaryLinks = Array.from(document.querySelectorAll('[data-summary-link]'));
+	const customSectionCounts = Array.from(document.querySelectorAll('[data-custom-section-count]'));
+	const customItems = Array.from(document.querySelectorAll('[data-custom-item]'));
+	const customLists = Array.from(document.querySelectorAll('[data-custom-list]'));
+	const customizationKey = 'routine-customization-v1';
 
 	const stateByCard = new Map();
 	let currentCard = null;
@@ -37,6 +42,7 @@
 	const toastContainer = document.querySelector('[data-toast-container]');
 
 	const guidedOverlay = document.querySelector('[data-guided-overlay]');
+	const guidedCard = document.querySelector('[data-guided-card]');
 	const guidedImage = document.querySelector('[data-guided-image]');
 	const guidedTitle = document.querySelector('[data-guided-title]');
 	const guidedMeta = document.querySelector('[data-guided-meta]');
@@ -72,6 +78,45 @@
 	const savePrefs = (prefs) => {
 		localStorage.setItem(prefsKey, JSON.stringify(prefs));
 	};
+
+	const getDefaultOrder = () => {
+		const order = {};
+		sections.forEach((section) => {
+			const sectionId = section.dataset.sectionId;
+			const list = section.querySelector('[data-section-list]');
+			if (!sectionId || !list) return;
+			order[sectionId] = Array.from(list.querySelectorAll('[data-exercise-id]')).map(
+				(card) => card.dataset.exerciseId
+			);
+		});
+		return order;
+	};
+
+	const loadCustomization = () => {
+		try {
+			return JSON.parse(localStorage.getItem(customizationKey) || '{}');
+		} catch {
+			return {};
+		}
+	};
+
+	let customization = loadCustomization();
+	let customOrder = customization.order || getDefaultOrder();
+	let customDisabled = customization.disabled || {};
+
+	const saveCustomization = () => {
+		localStorage.setItem(
+			customizationKey,
+			JSON.stringify({ order: customOrder, disabled: customDisabled })
+		);
+	};
+
+	const isDisabled = (card) => Boolean(customDisabled[card.dataset.exerciseId]);
+
+	const getOrderedCards = () =>
+		Array.from(document.querySelectorAll('[data-section-list] [data-exercise-id]'));
+
+	const getActiveCards = () => getOrderedCards().filter((card) => !isDisabled(card));
 
 	const prefs = loadPrefs();
 	const doneMap = loadProgress().done || {};
@@ -112,20 +157,84 @@
 				selected: getDefaultRest(card),
 				wasComplete: false,
 				notified: false,
+				startAt: null,
+				duration: null,
+				rafId: null,
+				autoAdvanced: false,
 			});
 		}
 		return stateByCard.get(card);
 	};
 
 	const setFormVisibility = () => {
-		if (!filterPending || !filterPending.checked) {
-			cards.forEach((card) => card.classList.remove('is-hidden'));
-			return;
-		}
 		cards.forEach((card) => {
+			const disabled = isDisabled(card);
+			card.classList.toggle('is-custom-hidden', disabled);
+			if (disabled) return;
+			if (!filterPending || !filterPending.checked) {
+				card.classList.remove('is-hidden');
+				return;
+			}
 			const done = Boolean(doneMap[card.dataset.exerciseId]);
 			card.classList.toggle('is-hidden', done);
 		});
+	};
+
+	const reorderList = (container, order, selector) => {
+		if (!container || !order?.length) return;
+		const items = Array.from(container.querySelectorAll(selector));
+		const itemMap = new Map(items.map((item) => [item.dataset.exerciseId, item]));
+		order.forEach((id) => {
+			const item = itemMap.get(id);
+			if (item) container.appendChild(item);
+		});
+		items.forEach((item) => {
+			if (!order.includes(item.dataset.exerciseId)) container.appendChild(item);
+		});
+	};
+
+	const applyCustomization = () => {
+		sections.forEach((section) => {
+			const sectionId = section.dataset.sectionId;
+			const list = section.querySelector('[data-section-list]');
+			if (!sectionId || !list) return;
+			const order = customOrder[sectionId];
+			if (!order || order.length === 0) {
+				customOrder[sectionId] = Array.from(list.querySelectorAll('[data-exercise-id]')).map(
+					(card) => card.dataset.exerciseId
+				);
+				return;
+			}
+			reorderList(list, order, '[data-exercise-id]');
+			Array.from(list.querySelectorAll('[data-exercise-id]')).forEach((card, index) => {
+				const badge = card.querySelector('[data-exercise-order]');
+				if (badge) badge.textContent = `#${index + 1}`;
+			});
+		});
+
+		customLists.forEach((list) => {
+			const sectionId = list.dataset.sectionId;
+			const order = customOrder[sectionId];
+			reorderList(list, order, '[data-custom-item]');
+		});
+
+		cards.forEach((card) => {
+			card.classList.toggle('is-custom-hidden', isDisabled(card));
+		});
+
+		customItems.forEach((item) => {
+			const checkbox = item.querySelector('[data-custom-toggle]');
+			const disabled = Boolean(customDisabled[item.dataset.exerciseId]);
+			if (checkbox) checkbox.checked = !disabled;
+			item.classList.toggle('opacity-60', disabled);
+		});
+
+		updateProgress();
+		setFormVisibility();
+		if (currentCard && isDisabled(currentCard)) {
+			const next = getNextCard(currentCard, true) || getPrevCard(currentCard, true);
+			if (next) setCurrentCard(next, guidedMode, 'next');
+		}
 	};
 
 	const updateGuidedOverlay = () => {
@@ -137,26 +246,62 @@
 		}
 		if (guidedTitle) guidedTitle.textContent = currentCard.querySelector('h3')?.textContent || '';
 		if (guidedMeta) {
-			const reps = currentCard.querySelector('dd')?.textContent || '';
-			guidedMeta.textContent = `Reps/tiempo: ${reps}`;
+			const meta = currentCard.querySelectorAll('dd');
+			const sets = meta[0]?.textContent || '';
+			const reps = meta[1]?.textContent || '';
+			const rest = meta[2]?.textContent || '';
+			guidedMeta.textContent = `Series ${sets} · Reps ${reps} · Descanso ${rest}`;
 		}
-		const index = cards.indexOf(currentCard) + 1;
-		if (guidedIndex) guidedIndex.textContent = `${index}/${cards.length}`;
+		const ordered = getActiveCards();
+		const index = ordered.indexOf(currentCard) + 1;
+		if (guidedIndex) guidedIndex.textContent = `${index}/${ordered.length}`;
 		const state = getState(currentCard);
 		if (guidedTimer) guidedTimer.textContent = formatTime(state.remaining);
-		const total = state.selected || getDefaultRest(currentCard);
-		if (guidedProgress) {
-			const progress = total ? ((total - state.remaining) / total) * 100 : 0;
-			guidedProgress.style.height = `${Math.min(Math.max(progress, 0), 100)}%`;
-		}
+		updateGuidedProgress(currentCard);
 	};
 
-	const setCurrentCard = (card, shouldScroll = false) => {
+	const updateGuidedProgress = (card) => {
+		if (!guidedProgress) return;
+		const state = getState(card);
+		const total = state.duration || state.selected || getDefaultRest(card);
+		const progress = total ? ((total - state.remaining) / total) * 100 : 0;
+		guidedProgress.style.width = `${Math.min(Math.max(progress, 0), 100)}%`;
+	};
+
+	const startProgressLoop = (card) => {
+		const state = getState(card);
+		if (state.rafId) cancelAnimationFrame(state.rafId);
+		const total = state.duration || state.selected || getDefaultRest(card);
+		const tick = () => {
+			if (!state.running) return;
+			const elapsed = (Date.now() - state.startAt) / 1000;
+			const progress = total ? Math.min(elapsed / total, 1) : 0;
+			if (guidedProgress) guidedProgress.style.width = `${progress * 100}%`;
+			state.rafId = requestAnimationFrame(tick);
+		};
+		state.rafId = requestAnimationFrame(tick);
+	};
+
+	const animateGuided = (direction = 'next') => {
+		if (!guidedCard) return;
+		const offset = direction === 'next' ? -24 : 24;
+		guidedCard.animate(
+			[
+				{ transform: `translateY(${offset}px)`, opacity: 0.5 },
+				{ transform: 'translateY(0)', opacity: 1 },
+			],
+			{ duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+		);
+	};
+
+	const setCurrentCard = (card, shouldScroll = false, direction = 'next') => {
+		if (card && isDisabled(card)) return;
 		if (currentCard) currentCard.classList.remove('is-current');
 		currentCard = card;
 		if (currentCard) currentCard.classList.add('is-current');
 		updateNowBar();
 		updateGuidedOverlay();
+		if (guidedMode) animateGuided(direction);
 		if (shouldScroll && currentCard && !guidedMode) {
 			currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
@@ -175,7 +320,14 @@
 	};
 
 	const updateProgress = () => {
-		const doneCount = Object.keys(doneMap).length;
+		const activeCards = getActiveCards();
+		const activeIds = new Set(activeCards.map((card) => card.dataset.exerciseId));
+		const doneCount = Object.keys(doneMap).filter((id) => activeIds.has(id)).length;
+		const totalCount = activeCards.length;
+
+		totalExerciseNodes.forEach((node) => {
+			node.textContent = `${totalCount}`;
+		});
 		if (progressCount) progressCount.textContent = `${doneCount}`;
 		if (progressTotal) progressTotal.textContent = `${totalCount}`;
 		if (progressFill) {
@@ -185,13 +337,29 @@
 
 		sections.forEach((section) => {
 			const sectionId = section.dataset.sectionId;
-			const sectionCards = cards.filter((card) => card.dataset.sectionId === sectionId);
+			const sectionCards = cards.filter(
+				(card) => card.dataset.sectionId === sectionId && !isDisabled(card)
+			);
 			const total = sectionCards.length;
 			const done = sectionCards.filter((card) => doneMap[card.dataset.exerciseId]).length;
 			const target = section.querySelector('[data-section-progress]');
 			const bar = section.querySelector('[data-section-progress-bar]');
+			const count = section.querySelector('[data-section-count]');
 			if (target) target.textContent = `${done}/${total} hechos`;
 			if (bar) bar.style.width = `${total ? (done / total) * 100 : 0}%`;
+			if (count) count.textContent = `${total} ejercicios`;
+
+			const summaryLink = summaryLinks.find((link) => link.dataset.summaryId === sectionId);
+			const summaryCount = summaryLink?.querySelector('[data-summary-count]');
+			if (summaryCount) summaryCount.textContent = `${total} ejercicios`;
+		});
+
+		customSectionCounts.forEach((node) => {
+			const sectionId = node.dataset.sectionId;
+			const active = cards.filter(
+				(card) => card.dataset.sectionId === sectionId && !isDisabled(card)
+			).length;
+			node.textContent = `${active} activos`;
 		});
 	};
 
@@ -260,6 +428,12 @@
 		if (state.wasComplete && !state.notified) {
 			state.notified = true;
 			notifyComplete();
+			if (guidedMode && !state.autoAdvanced) {
+				state.autoAdvanced = true;
+				setTimeout(() => {
+					scrollToNext(card);
+				}, 700);
+			}
 		}
 		if (currentCard === card) updateNowBar();
 		if (guidedMode && currentCard === card) updateGuidedOverlay();
@@ -269,10 +443,14 @@
 		const state = getState(card);
 		if (state.running) return;
 		if (state.remaining === 0) state.remaining = state.selected || getDefaultRest(card);
+		state.duration = state.remaining;
+		state.startAt = Date.now();
 		state.running = true;
 		state.wasComplete = false;
 		state.notified = false;
+		state.autoAdvanced = false;
 		updateTimerUI(card);
+		if (guidedMode && currentCard === card) startProgressLoop(card);
 		state.intervalId = window.setInterval(() => {
 			state.remaining -= 1;
 			if (state.remaining <= 0) {
@@ -281,6 +459,8 @@
 				state.wasComplete = true;
 				window.clearInterval(state.intervalId);
 				state.intervalId = null;
+				if (state.rafId) cancelAnimationFrame(state.rafId);
+				state.rafId = null;
 			}
 			updateTimerUI(card);
 		}, 1000);
@@ -292,8 +472,12 @@
 			state.running = false;
 			window.clearInterval(state.intervalId);
 			state.intervalId = null;
+			if (state.rafId) cancelAnimationFrame(state.rafId);
+			state.rafId = null;
 		} else if (state.remaining > 0) {
 			state.running = true;
+			const total = state.duration || state.selected || getDefaultRest(card);
+			state.startAt = Date.now() - (total - state.remaining) * 1000;
 			state.intervalId = window.setInterval(() => {
 				state.remaining -= 1;
 				if (state.remaining <= 0) {
@@ -302,9 +486,12 @@
 					state.wasComplete = true;
 					window.clearInterval(state.intervalId);
 					state.intervalId = null;
+					if (state.rafId) cancelAnimationFrame(state.rafId);
+					state.rafId = null;
 				}
 				updateTimerUI(card);
 			}, 1000);
+			if (guidedMode && currentCard === card) startProgressLoop(card);
 		}
 		updateTimerUI(card);
 	};
@@ -315,8 +502,11 @@
 		state.remaining = 0;
 		state.wasComplete = false;
 		state.notified = false;
+		state.autoAdvanced = false;
 		window.clearInterval(state.intervalId);
 		state.intervalId = null;
+		if (state.rafId) cancelAnimationFrame(state.rafId);
+		state.rafId = null;
 		updateTimerUI(card);
 	};
 
@@ -326,6 +516,11 @@
 		state.remaining = 0;
 		state.wasComplete = false;
 		state.notified = false;
+		state.autoAdvanced = false;
+		state.duration = value;
+		state.startAt = null;
+		if (state.rafId) cancelAnimationFrame(state.rafId);
+		state.rafId = null;
 		const options = card.querySelectorAll('[data-rest-option]');
 		options.forEach((btn) => {
 			btn.classList.toggle('is-active', Number(btn.dataset.restOption) === value);
@@ -334,12 +529,25 @@
 	};
 
 	const getNextCard = (card, pendingOnly) => {
-		const index = cards.indexOf(card);
+		const ordered = getActiveCards();
+		const index = ordered.indexOf(card);
 		if (index === -1) return null;
-		for (let step = 1; step <= cards.length; step += 1) {
-			const next = cards[(index + step) % cards.length];
+		for (let step = 1; step <= ordered.length; step += 1) {
+			const next = ordered[(index + step) % ordered.length];
 			if (!pendingOnly) return next;
 			if (!doneMap[next.dataset.exerciseId]) return next;
+		}
+		return null;
+	};
+
+	const getPrevCard = (card, pendingOnly) => {
+		const ordered = getActiveCards();
+		const index = ordered.indexOf(card);
+		if (index === -1) return null;
+		for (let step = 1; step <= ordered.length; step += 1) {
+			const prev = ordered[(index - step + ordered.length) % ordered.length];
+			if (!pendingOnly) return prev;
+			if (!doneMap[prev.dataset.exerciseId]) return prev;
 		}
 		return null;
 	};
@@ -347,7 +555,13 @@
 	const scrollToNext = (card) => {
 		const next = getNextCard(card, guidedMode || filterPending?.checked);
 		if (!next) return;
-		setCurrentCard(next, guidedMode);
+		setCurrentCard(next, guidedMode, 'next');
+	};
+
+	const scrollToPrev = (card) => {
+		const prev = getPrevCard(card, guidedMode || filterPending?.checked);
+		if (!prev) return;
+		setCurrentCard(prev, guidedMode, 'prev');
 	};
 
 	const openSectionsPanel = () => {
@@ -398,16 +612,17 @@
 		updateTimerUI(card);
 	});
 
-	updateProgress();
 	initPrefs();
+	applyCustomization();
 
 	const activateGuidedMode = () => {
 		guidedMode = true;
 		prefs.guidedMode = true;
 		savePrefs(prefs);
 		guidedToggle?.classList.add('ring-2', 'ring-amber-300/60');
-		const firstPending = cards.find((card) => !doneMap[card.dataset.exerciseId]);
-		setCurrentCard(firstPending || cards[0], true);
+		const ordered = getActiveCards();
+		const firstPending = ordered.find((card) => !doneMap[card.dataset.exerciseId]);
+		if (ordered.length > 0) setCurrentCard(firstPending || ordered[0], true);
 		showGuidedOverlay();
 		showToast('Modo guiado activo', 'warn');
 	};
@@ -449,9 +664,50 @@
 			savePrefs(prefs);
 			return;
 		}
+
+		const customToggle = event.target.closest('[data-custom-toggle]');
+		if (customToggle) {
+			const item = customToggle.closest('[data-custom-item]');
+			if (!item) return;
+			const id = item.dataset.exerciseId;
+			if (customToggle.checked) delete customDisabled[id];
+			else customDisabled[id] = true;
+			saveCustomization();
+			applyCustomization();
+		}
 	});
 
 	document.addEventListener('click', (event) => {
+		const customMove = event.target.closest('[data-custom-move]');
+		if (customMove) {
+			const item = customMove.closest('[data-custom-item]');
+			if (!item) return;
+			const sectionId = item.dataset.sectionId;
+			const id = item.dataset.exerciseId;
+			const order = customOrder[sectionId] || getDefaultOrder()[sectionId] || [];
+			const index = order.indexOf(id);
+			if (index === -1) return;
+			if (customMove.dataset.customMove === 'up' && index > 0) {
+				[order[index - 1], order[index]] = [order[index], order[index - 1]];
+			}
+			if (customMove.dataset.customMove === 'down' && index < order.length - 1) {
+				[order[index + 1], order[index]] = [order[index], order[index + 1]];
+			}
+			customOrder[sectionId] = order;
+			saveCustomization();
+			applyCustomization();
+			return;
+		}
+
+		if (event.target.closest('[data-custom-reset]')) {
+			customDisabled = {};
+			customOrder = getDefaultOrder();
+			saveCustomization();
+			applyCustomization();
+			showToast('Personalizacion reiniciada');
+			return;
+		}
+
 		const restOption = event.target.closest('[data-rest-option]');
 		if (restOption) {
 			const card = restOption.closest('[data-exercise-id]');
@@ -565,6 +821,12 @@
 		if (event.key === 'n' || event.key === 'N') {
 			scrollToNext(currentCard);
 		}
+		if (event.key === 'ArrowUp') {
+			scrollToPrev(currentCard);
+		}
+		if (event.key === 'ArrowDown') {
+			scrollToNext(currentCard);
+		}
 		if (event.key === 'h' || event.key === 'H') {
 			setDoneState(currentCard, true);
 		}
@@ -583,6 +845,31 @@
 	});
 
 	if (guidedMode) activateGuidedMode();
+
+	let touchStartY = 0;
+	let touchStartX = 0;
+	let touchActive = false;
+
+	guidedOverlay?.addEventListener('touchstart', (event) => {
+		const touch = event.touches[0];
+		touchStartY = touch.clientY;
+		touchStartX = touch.clientX;
+		touchActive = true;
+	});
+
+	guidedOverlay?.addEventListener('touchend', (event) => {
+		if (!touchActive || !currentCard) return;
+		touchActive = false;
+		const touch = event.changedTouches[0];
+		const deltaY = touch.clientY - touchStartY;
+		const deltaX = touch.clientX - touchStartX;
+		if (Math.abs(deltaY) < 40 || Math.abs(deltaY) < Math.abs(deltaX)) return;
+		if (deltaY < 0) {
+			scrollToNext(currentCard);
+		} else {
+			scrollToPrev(currentCard);
+		}
+	});
 
 	const handleScroll = () => {
 		if (!backToTop) return;

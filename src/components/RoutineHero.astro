@@ -1,0 +1,54 @@
+---
+const { totalExercises } = Astro.props;
+---
+
+<section class="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
+	<div class="flex flex-col gap-6">
+		<p class="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-amber-300">
+			Rutina full body en casa
+		</p>
+		<h1 class="font-display text-3xl leading-tight text-slate-50 md:text-5xl">
+			Entrena todo el cuerpo con ritmo y control
+		</h1>
+		<p class="max-w-2xl text-base text-slate-300">
+			Una experiencia de rutina guiada para casa: marca avances, controla descansos y
+			manten el flujo sin perder foco.
+		</p>
+		<div class="flex flex-wrap gap-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+			<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">45-60 min</span>
+			<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">Sin gimnasio</span>
+			<span class="rounded-full border border-slate-700/50 bg-slate-900/80 px-3 py-1">Material opcional</span>
+		</div>
+		<div class="flex flex-wrap gap-3">
+			<a
+				href="#calentamiento"
+				class="rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-950"
+			>
+				Comenzar
+			</a>
+			<a
+				href="#finisher"
+				class="rounded-full border border-slate-700/60 bg-slate-900/70 px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-200"
+			>
+				Ver cierre
+			</a>
+		</div>
+	</div>
+	<div class="glass-panel flex flex-col gap-4 p-6">
+		<h2 class="font-display text-xl text-slate-100">Tu sesion de hoy</h2>
+		<p class="text-sm text-slate-300">
+			Completa cada bloque y marca el avance para ver el progreso en tiempo real.
+		</p>
+		<div class="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-400">
+			<span>Total ejercicios</span>
+			<span data-total-exercises>{totalExercises}</span>
+		</div>
+		<div class="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-400">
+			<span>Descanso recomendado</span>
+			<span>45-60 s</span>
+		</div>
+		<div class="rounded-xl border border-slate-700/40 bg-slate-950/70 p-4 text-sm text-slate-300">
+			Empieza con el calentamiento completo y descansa 1-2 min entre secciones si lo necesitas.
+		</div>
+	</div>
+</section>

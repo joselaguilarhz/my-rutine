@@ -1,0 +1,107 @@
+<div
+	class="fixed bottom-0 left-0 right-0 z-20 hidden border-t border-slate-800/60 bg-slate-950/90 px-6 py-4 backdrop-blur"
+	data-now-playing
+>
+	<div class="mx-auto flex w-full max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+		<div>
+			<p class="text-xs uppercase tracking-[0.3em] text-slate-400">Ahora</p>
+			<p class="text-lg font-semibold text-slate-100" data-now-title>Selecciona un ejercicio</p>
+			<p class="text-xs uppercase tracking-[0.3em] text-amber-300" data-now-timer>00:00</p>
+		</div>
+		<div class="flex flex-wrap gap-2">
+			<button
+				class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+				type="button"
+				data-now-start
+			>
+				Iniciar descanso
+			</button>
+			<button
+				class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+				type="button"
+				data-now-toggle
+			>
+				Pausar
+			</button>
+			<button
+				class="rounded-full border border-amber-300/50 bg-amber-300/10 px-4 py-2 text-xs uppercase tracking-[0.25em] text-amber-300"
+				type="button"
+				data-now-done
+			>
+				Hecho
+			</button>
+			<button
+				class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+				type="button"
+				data-now-next
+			>
+				Siguiente
+			</button>
+		</div>
+	</div>
+</div>
+<div class="fixed right-6 top-24 z-30 grid gap-2" data-toast-container></div>
+<div class="fixed inset-0 z-40 hidden bg-slate-950/95 text-slate-100" data-guided-overlay aria-hidden="true">
+	<div class="relative h-full w-full">
+		<button
+			type="button"
+			class="absolute right-6 top-6 rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-200"
+			data-guided-close
+		>
+			Salir
+		</button>
+		<div class="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 px-6 py-10">
+			<div class="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-400">
+				<span>Modo guiado</span>
+				<span data-guided-index>1/1</span>
+			</div>
+			<div class="guided-card relative flex-1 overflow-hidden rounded-3xl border border-slate-700/60" data-guided-card>
+				<div class="absolute left-0 right-0 top-0 z-10 h-1.5 bg-slate-900/70">
+					<div class="h-full w-0 bg-amber-300" data-guided-progress></div>
+				</div>
+				<img data-guided-image src="" alt="" class="h-full w-full object-cover" />
+				<div class="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/80"></div>
+				<div class="absolute bottom-0 left-0 right-0 flex flex-col gap-3 bg-black/50 p-6 backdrop-blur">
+					<h2 class="font-display text-3xl text-slate-50" data-guided-title></h2>
+					<p class="text-sm text-white/90" data-guided-meta></p>
+					<div class="flex items-center justify-between">
+						<span class="text-xs uppercase tracking-[0.3em] text-white/70">Descanso</span>
+						<span class="text-lg font-semibold tracking-[0.3em] text-white" data-guided-timer>
+							00:00
+						</span>
+					</div>
+					<div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+						<button
+							type="button"
+							class="rounded-full bg-amber-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-950"
+							data-guided-start
+						>
+							Iniciar
+						</button>
+						<button
+							type="button"
+							class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-200"
+							data-guided-next
+						>
+							Siguiente
+						</button>
+						<button
+							type="button"
+							class="rounded-full border border-amber-300/50 bg-amber-300/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-amber-300"
+							data-guided-done
+						>
+							Hecho
+						</button>
+						<button
+							type="button"
+							class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-200"
+							data-guided-pause
+						>
+							Pausar
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

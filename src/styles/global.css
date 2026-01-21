@@ -105,6 +105,10 @@
 		@apply hidden;
 	}
 
+	.exercise-card.is-custom-hidden {
+		@apply hidden;
+	}
+
 	.exercise-card__timer.is-complete [data-timer-display] {
 		@apply text-emerald-300;
 	}
@@ -151,5 +155,9 @@
 
 	.content pre {
 		@apply overflow-x-auto rounded-xl border border-slate-800/60 bg-slate-950/70 p-4;
+	}
+
+	.guided-card {
+		@apply will-change-transform;
 	}
 }

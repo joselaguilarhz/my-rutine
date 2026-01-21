@@ -1,0 +1,67 @@
+---
+const { routineSummary, totalExercises } = Astro.props;
+---
+
+<section class="grid gap-6 md:grid-cols-[1.2fr,0.8fr]">
+	<div class="glass-panel flex flex-col gap-4 p-6">
+		<h2 class="font-display text-lg text-slate-100">Indice de secciones</h2>
+		<div class="grid gap-2">
+			{routineSummary.map((item) => (
+				<a
+					href={`#${item.id}`}
+					class="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/60 px-4 py-3 text-sm text-slate-200"
+					data-summary-link
+					data-summary-id={item.id}
+				>
+					<span>{item.title}</span>
+					<em
+						class="text-xs not-italic uppercase tracking-[0.2em] text-slate-400"
+						data-summary-count
+					>
+						{item.count} ejercicios
+					</em>
+				</a>
+			))}
+		</div>
+	</div>
+	<section class="glass-panel flex flex-col gap-4 p-6" aria-live="polite">
+		<h2 class="font-display text-lg text-slate-100">Progreso de hoy</h2>
+		<p class="text-sm text-slate-300">
+			<span data-progress-count>0</span> / <span data-progress-total>{totalExercises}</span> ejercicios
+			completados
+		</p>
+		<div class="h-2 w-full overflow-hidden rounded-full bg-slate-900">
+			<div class="h-full w-0 bg-gradient-to-r from-amber-300 to-emerald-400" data-progress-fill></div>
+		</div>
+		<div class="flex flex-wrap items-center gap-3">
+			<button
+				class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200"
+				type="button"
+				data-reset-today
+			>
+				Reset de hoy
+			</button>
+			<label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+				<input type="checkbox" data-filter-pending class="h-4 w-4 rounded border-slate-600" />
+				Solo pendientes
+			</label>
+			<button
+				class="rounded-full border border-amber-300/50 bg-amber-300/10 px-4 py-2 text-xs uppercase tracking-[0.25em] text-amber-300"
+				type="button"
+				data-guided-toggle
+			>
+				Modo guiado
+			</button>
+		</div>
+		<div class="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+			<label class="inline-flex items-center gap-2">
+				<input type="checkbox" data-sound-toggle class="h-4 w-4 rounded border-slate-600" />
+				Sonido
+			</label>
+			<label class="inline-flex items-center gap-2">
+				<input type="checkbox" data-vibration-toggle class="h-4 w-4 rounded border-slate-600" />
+				Vibracion
+			</label>
+		</div>
+	</section>
+</section>

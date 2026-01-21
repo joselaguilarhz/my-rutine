@@ -1,0 +1,35 @@
+---
+const { routineSummary } = Astro.props;
+---
+
+<button
+	class="fixed bottom-6 left-6 z-20 inline-flex rounded-full border border-slate-700/60 bg-slate-900/80 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200 md:hidden"
+	type="button"
+	data-sections-toggle
+	aria-expanded="false"
+>
+	Secciones
+</button>
+<div class="fixed inset-0 z-10 bg-slate-950/70 opacity-0 pointer-events-none transition" data-sections-overlay></div>
+<div
+	class="fixed bottom-20 left-6 z-20 hidden w-[min(260px,calc(100vw-3rem))] flex flex-col gap-4 rounded-2xl border border-slate-700/50 bg-slate-950/95 p-4"
+	data-sections-panel
+	hidden
+>
+	<h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Ir a seccion</h3>
+	<nav class="grid gap-2 text-sm text-slate-200">
+		{routineSummary.map((item) => (
+			<a class="rounded-xl bg-slate-900/70 px-3 py-2" href={`#${item.id}`}>
+				{item.title}
+			</a>
+		))}
+	</nav>
+</div>
+<button
+	class="fixed bottom-6 right-6 z-20 rounded-full bg-amber-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 opacity-0 pointer-events-none transition"
+	type="button"
+	data-back-to-top
+	aria-label="Volver arriba"
+>
+	Arriba
+</button>

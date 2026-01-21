@@ -7,8 +7,11 @@
 	const resetButton = document.querySelector('[data-profile-reset]');
 	const bmrOutput = document.querySelector('[data-bmr]');
 	const tdeeOutput = document.querySelector('[data-tdee]');
+	const caloriesTargetOutput = document.querySelector('[data-calories-target]');
 	const proteinOutput = document.querySelector('[data-protein]');
 	const waterOutput = document.querySelector('[data-water]');
+	const bmiOutput = document.querySelector('[data-bmi]');
+	const leanMassOutput = document.querySelector('[data-lean-mass]');
 
 	const registerForm = document.querySelector('[data-register-form]');
 	const loginForm = document.querySelector('[data-login-form]');
@@ -55,16 +58,27 @@
 		const age = Number(data.age || 0);
 		const activity = Number(data.activity || 1.2);
 		const sex = data.sex || 'male';
+		const goal = data.goal || 'maintenance';
+		const bodyFat = Number(data.bodyFat || 0);
 		const base = 10 * weight + 6.25 * height - 5 * age;
 		const bmr = Math.max(0, Math.round(base + (sex === 'male' ? 5 : -161)));
 		const tdee = Math.max(0, Math.round(bmr * activity));
+		const goalOffset = goal === 'deficit' ? -300 : goal === 'surplus' ? 300 : 0;
+		const caloriesTarget = Math.max(0, tdee + goalOffset);
 		const protein = Math.max(0, Math.round(weight * 1.6));
 		const water = Math.max(0, (weight * 0.035).toFixed(1));
+		const bmi =
+			weight > 0 && height > 0 ? Math.max(0, (weight / Math.pow(height / 100, 2)).toFixed(1)) : 0;
+		const leanMass =
+			weight > 0 && bodyFat > 0 ? Math.max(0, (weight * (1 - bodyFat / 100)).toFixed(1)) : 0;
 
 		if (bmrOutput) bmrOutput.textContent = `${bmr} kcal`;
 		if (tdeeOutput) tdeeOutput.textContent = `${tdee} kcal`;
+		if (caloriesTargetOutput) caloriesTargetOutput.textContent = `${caloriesTarget} kcal`;
 		if (proteinOutput) proteinOutput.textContent = `${protein} g`;
 		if (waterOutput) waterOutput.textContent = `${water} L`;
+		if (bmiOutput) bmiOutput.textContent = `${bmi}`;
+		if (leanMassOutput) leanMassOutput.textContent = `${leanMass} kg`;
 	};
 
 	const setFormEnabled = (enabled) => {

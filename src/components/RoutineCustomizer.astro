@@ -1,0 +1,82 @@
+---
+const { sections } = Astro.props;
+---
+
+<section class="glass-panel flex flex-col gap-6 p-6" data-customizer>
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<div>
+			<p class="text-xs uppercase tracking-[0.35em] text-amber-300">Personaliza</p>
+			<h2 class="font-display text-2xl text-slate-100">Tu rutina, a tu ritmo</h2>
+			<p class="text-sm text-slate-300">
+				Activa o desactiva ejercicios y reordena cada bloque segun tu energia de hoy.
+			</p>
+		</div>
+		<button
+			type="button"
+			data-custom-reset
+			class="rounded-full border border-slate-700/60 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200"
+		>
+			Resetear orden
+		</button>
+	</div>
+	<div class="grid gap-6 lg:grid-cols-2">
+		{sections.map((section) => (
+			<div class="rounded-2xl border border-slate-700/40 bg-slate-950/60 p-5">
+				<div class="flex items-center justify-between gap-3">
+					<h3 class="font-display text-lg text-slate-100">{section.title}</h3>
+					<span
+						class="text-xs uppercase tracking-[0.2em] text-slate-400"
+						data-custom-section-count
+						data-section-id={section.id}
+					>
+						{section.exercises.length} activos
+					</span>
+				</div>
+				<div class="mt-4 grid gap-3" data-custom-list data-section-id={section.id}>
+					{section.exercises.map((exercise) => (
+						<div
+							class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/40 bg-slate-900/70 px-4 py-3"
+							data-custom-item
+							data-section-id={section.id}
+							data-exercise-id={exercise.id}
+						>
+							<div>
+								<p class="text-sm font-semibold text-slate-100">{exercise.name}</p>
+								<p class="text-xs text-slate-400">
+									Series {exercise.sets} - Reps {exercise.reps}
+								</p>
+							</div>
+							<div class="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+								<button
+									type="button"
+									data-custom-move="up"
+									class="rounded-full border border-slate-700/60 bg-slate-950/60 px-3 py-1 text-slate-200"
+									aria-label="Subir"
+								>
+									Subir
+								</button>
+								<button
+									type="button"
+									data-custom-move="down"
+									class="rounded-full border border-slate-700/60 bg-slate-950/60 px-3 py-1 text-slate-200"
+									aria-label="Bajar"
+								>
+									Bajar
+								</button>
+								<label class="inline-flex items-center gap-2">
+									<input
+										type="checkbox"
+										checked
+										data-custom-toggle
+										class="h-4 w-4 rounded border-slate-600"
+									/>
+									Activo
+								</label>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		))}
+	</div>
+</section>
